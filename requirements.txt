@@ -1,0 +1,17 @@
+selenium
+pandas
+webdriver_manager
+pydantic
+langchain_core
+langchain_community
+thefuzz
+fpdf2
+torch
+datasets
+transformers
+scikit-learn
+tiktoken
+sentencepiece
+protobuf
+Pillow
+streamlit

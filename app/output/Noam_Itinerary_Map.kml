@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Travel Itinerary Map</name>
+    <Style id="icon-1899-0288D1-nodesc">
+      <IconStyle>
+        <color>ffd18802</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-cgi.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+
+    <Placemark>
+      <name>The Grand Palace</name>
+      <description><![CDATA[The spectacular complex of buildings which has been the official residence of the Kings of Siam.<br><br><a href="https://goo.gl/maps/3S7CjPz8vRz">Open in Google Maps</a>]]></description>
+      <address>The Grand Palace, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Wat Pho</name>
+      <description><![CDATA[Home to the famous Reclining Buddha, 46 meters long and covered in gold leaf.<br><br><a href="https://goo.gl/maps/8GfN4rX9wS2">Open in Google Maps</a>]]></description>
+      <address>Wat Pho, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Wat Arun</name>
+      <description><![CDATA[The iconic "Temple of Dawn" with its majestic prang decorated with porcelain.<br><br><a href="https://goo.gl/maps/5T9K2L6zQp1">Open in Google Maps</a>]]></description>
+      <address>Wat Arun, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Wat Saket</name>
+      <description><![CDATA[Also known as the Golden Mount, this temple offers panoramic views of the old city.<br><br><a href="https://goo.gl/maps/2X8N3M4kPz7">Open in Google Maps</a>]]></description>
+      <address>Wat Saket, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Jim Thompson House</name>
+      <description><![CDATA[A museum of Thai art and architecture consisting of several traditional teak wood houses.<br><br><a href="https://goo.gl/maps/9L1K5M7zXv3">Open in Google Maps</a>]]></description>
+      <address>Jim Thompson House, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>MBK Center</name>
+      <description><![CDATA[A massive shopping mall known for electronics, gadgets, and affordable fashion.<br><br><a href="https://goo.gl/maps/4H2N6R8zQv1">Open in Google Maps</a>]]></description>
+      <address>MBK Center, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Siam Paragon</name>
+      <description><![CDATA[One of the largest shopping malls in Thailand, featuring luxury brands and a huge food court.<br><br><a href="https://goo.gl/maps/1K5M9T8zWp2">Open in Google Maps</a>]]></description>
+      <address>Siam Paragon, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Lumpini Park</name>
+      <description><![CDATA[The "Central Park" of Bangkok, a green oasis perfect for walks and seeing giant lizards.<br><br><a href="https://goo.gl/maps/7GfN2M3kLz9">Open in Google Maps</a>]]></description>
+      <address>Lumpini Park, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Chatuchak Weekend Market</name>
+      <description><![CDATA[The world's largest weekend market, selling everything from antiques to street food.<br><br><a href="https://goo.gl/maps/3S4K9R5zXv8">Open in Google Maps</a>]]></description>
+      <address>Chatuchak Weekend Market, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Yaowarat Road</name>
+      <description><![CDATA[The heart of Chinatown, famous for its neon signs and incredible street food at night.<br><br><a href="https://goo.gl/maps/6H1L8M2zQp4">Open in Google Maps</a>]]></description>
+      <address>Yaowarat Road, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Wat Traimit</name>
+      <description><![CDATA[Home to the world's largest solid gold Buddha statue, weighing 5.5 tons.<br><br><a href="https://goo.gl/maps/2N5M3L7zXv9">Open in Google Maps</a>]]></description>
+      <address>Wat Traimit, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Asiatique The Riverfront</name>
+      <description><![CDATA[A large open-air riverside mall combining shopping, dining, and a giant Ferris wheel.<br><br><a href="https://goo.gl/maps/5K1M9R4zQp2">Open in Google Maps</a>]]></description>
+      <address>Asiatique The Riverfront, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Khao San Road</name>
+      <description><![CDATA[The legendary backpacker street, known for its nightlife, bars, and vibrant street life.<br><br><a href="https://goo.gl/maps/8L2K4M6zXv1">Open in Google Maps</a>]]></description>
+      <address>Khao San Road, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Mahanakhon SkyWalk</name>
+      <description><![CDATA[The tallest observation deck in Thailand with a thrilling glass skywalk at 314 meters.<br><br><a href="https://goo.gl/maps/4N8M2L3zQp7">Open in Google Maps</a>]]></description>
+      <address>Mahanakhon SkyWalk, Thailand</address>
+    </Placemark>
+    <Placemark>
+      <name>Iconsiam</name>
+      <description><![CDATA[A luxury riverside landmark called the "Mother of all Malls" with a floating market inside.<br><br><a href="https://goo.gl/maps/1S9K5M4zXv2">Open in Google Maps</a>]]></description>
+      <address>Iconsiam, Thailand</address>
+    </Placemark>  </Document>
+</kml>

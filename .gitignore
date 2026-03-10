@@ -1,0 +1,38 @@
+# --- Python & Environment ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.venv
+env/
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints
+
+# --- Models & Weights (קריטי!) ---
+# אל תעלה את ה-Checkpoints של ה-Fine-tuning
+model/
+checkpoint-*/
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# --- Data & Scraped Content ---
+# קבצי הנתונים הגולמיים והמעובדים
+DataProcess/Unified_Countries/*.csv
+ScrapedData/
+*.csv
+*.json
+#!example.csv  # אם תרצה להשאיר קובץ אחד לדוגמה
+
+# --- Streamlit ---
+.streamlit/
+static/
+
+# --- OS specific files ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
