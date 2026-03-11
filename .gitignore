@@ -25,11 +25,11 @@ DataProcess/Unified_Countries/*.csv
 ScrapedData/
 *.csv
 *.json
-#!example.csv  # אם תרצה להשאיר קובץ אחד לדוגמה
-
+!DataProcess/Unified_Countries/Thailand_processed.csv
 # --- Streamlit ---
 .streamlit/
 static/
+saved_itineraries/
 
 # --- OS specific files ---
 .DS_Store
