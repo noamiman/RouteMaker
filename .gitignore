@@ -19,7 +19,8 @@ checkpoint-*/
 model/chk.py
 model/tourism_model_refined
 model/tourism_model
-
+!model/reviews_with_rates_10k.json
+!model/travel_edge_reviews_1500.json
 # --- Data & Scraped Content ---
 
 DataProcess/Unified_Countries/*.csv
