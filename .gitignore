@@ -10,17 +10,18 @@ env/
 # --- Jupyter Notebooks ---
 .ipynb_checkpoints
 
-# --- Models & Weights (קריטי!) ---
-# אל תעלה את ה-Checkpoints של ה-Fine-tuning
-model/
+# --- Models & Weights ---
 checkpoint-*/
 *.bin
 *.pt
 *.pth
 *.onnx
+model/chk.py
+model/tourism_model_refined
+model/tourism_model
 
 # --- Data & Scraped Content ---
-# קבצי הנתונים הגולמיים והמעובדים
+
 DataProcess/Unified_Countries/*.csv
 ScrapedData/
 *.csv
