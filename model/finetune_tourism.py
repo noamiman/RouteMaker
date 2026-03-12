@@ -163,10 +163,9 @@ def second_fine_tune(new_data):
 
     trainer.train()
 
-# Usage (Assuming raw_data is loaded)
+# Usage
 # main(raw_data)
 if __name__ == "__main__":
-    # Placeholder: Load your 10,000 reviews here
     with open('travel_edge_reviews_1500.json', 'r') as f:
         raw_data = json.load(f)
     second_fine_tune(raw_data)
