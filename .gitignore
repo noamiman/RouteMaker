@@ -20,9 +20,11 @@ checkpoint-*/
 model/chk.py
 model/tourism_model_refined
 model/tourism_model
+model/tourism_model_checkpoint_1625
 
-!model/reviews_with_rates_10k.json
-!model/travel_edge_reviews_1500.json
+!for_full_fineTune.json
+!reviews_with_rates_10k.json
+!travel_edge_reviews_1500.json
 
 # --- Data & Scraped Content ---
 

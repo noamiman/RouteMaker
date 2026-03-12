@@ -73,8 +73,8 @@ class TravelClassifier:
 
 # --- דוגמה לשימוש ---
 if __name__ == "__main__":
-    MODEL_DIR = "../model/checkpoint-7515"
-    DATA_DIR = "Unified_Countries/Japan_processed.csv"
+    MODEL_DIR = "../model/tourism_model_checkpoint_1625"
+    DATA_DIR = "Unified_Countries/Thailand_processed.csv"
 
     classifier = TravelClassifier(MODEL_DIR)
 

@@ -93,5 +93,5 @@ def aggregate_by_country_refined(root_dir, output_dir="Unified_Countries"):
             print(f"Saved {len(final_rows)} rows for {country}: {output_file}")
 
 # run
-aggregate_by_country_refined("../ScrapedData/Bucketlistly/Japan")
+aggregate_by_country_refined("../ScrapedData/Bucketlistly/Italy")
 
