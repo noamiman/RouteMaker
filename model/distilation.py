@@ -5,8 +5,8 @@ import os
 from tqdm import tqdm
 
 # --- config ---
-INPUT_CSV = "Unified_Countries/Thailand_processed.csv"
-OUTPUT_JSON = "Unified_Countries/Thailand_labeled.json"
+INPUT_CSV = "../DataProcess/Unified_Countries/Italy_processed.csv"
+OUTPUT_JSON = "../DataProcess/Unified_Countries/Italy_Labeled.json"
 MODEL_NAME = "llama3.2:3b"
 
 CATEGORIES = [

@@ -71,11 +71,31 @@ st.markdown("""
     }
     .stButton>button { border-radius: 8px !important; font-weight: bold !important; }
     section[data-testid="stSidebar"] { background-color: #0e1117 !important; }
+    
+    .back-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #3d4452;
+        color: white !important;
+        padding: 10px 15px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: bold;
+        z-index: 1000;
+        border: 1px solid #ffffff33;
+        transition: 0.3s;
+    }
+    .back-to-top:hover {
+        background-color: #1e2129;
+        transform: scale(1.1);
+    }
     </style>
     """, unsafe_allow_html=True)
 
 
 # --- Data Loading (Multi-Country Support) ---
+
 @st.cache_data
 def load_all_countries_data():
     """
@@ -273,6 +293,7 @@ with st.sidebar:
 
 # --- Main Area: Discovery ---
 st.title(f"🌍 Editing: {st.session_state.current_route}")
+st.markdown("<div id='top'></div>", unsafe_allow_html=True)
 
 if not df.empty:
     # autocomplete search box for places, showing all places from the entire dataset (not just the selected country) to allow users to find specific attractions even if they don't know which country they belong to. The search box will be placed above the category filters for better visibility and accessibility.
@@ -362,6 +383,10 @@ if not df.empty:
 
                         st.caption(f"**Summary:** {row['short_summary']}")
 
+                        maps_url = row.get('google_maps_url')
+                        if pd.notna(maps_url) and maps_url != "":
+                            st.link_button("📍 See in Maps", maps_url, use_container_width=False)
+
                     with c2:
                         day_val = st.number_input("Assign Day", min_value=1, max_value=30, value=1, key=f"day_{idx}")
 
@@ -381,37 +406,51 @@ if not df.empty:
             st.info("No places match your criteria. Try adjusting the filters or search term.")
 
 # --- Itinerary Management ---
-st.header(f"📝 {st.session_state.current_route} Itinerary")
-curr_itinerary = st.session_state.all_itineraries[st.session_state.current_route]
+    st.header(f"📝 {st.session_state.current_route} Itinerary")
+    curr_itinerary = st.session_state.all_itineraries[st.session_state.current_route]
 
-if not curr_itinerary.empty:
-    col_info, col_clear = st.columns([4, 1])
-    with col_info:
-        st.info(f"Editing **{st.session_state.current_route}**. Change 'Day' and save to re-sort.")
-    with col_clear:
-        if st.button("🗑️ Clear This Route", type="secondary", use_container_width=True):
-            st.session_state.all_itineraries[st.session_state.current_route] = pd.DataFrame(
-                columns=df.columns.tolist() + ['day'])
+    if not curr_itinerary.empty:
+        col_info, col_clear = st.columns([4, 1])
+        with col_info:
+            st.info(f"Editing **{st.session_state.current_route}**. Change 'Day' and save to re-sort.")
+        with col_clear:
+            if st.button("🗑️ Clear This Route", type="secondary", use_container_width=True):
+                st.session_state.all_itineraries[st.session_state.current_route] = pd.DataFrame(
+                    columns=df.columns.tolist() + ['day'])
+                st.rerun()
+
+        # מיון לפי יום
+        curr_itinerary = curr_itinerary.sort_values(by='day')
+
+        # עריכת הטבלה עם עמודת קישור
+        edited_df = st.data_editor(
+            curr_itinerary,
+            # הוספנו את google_maps_url לסדר העמודות
+            column_order=("day", "place", "country", "description", "google_maps_url"),
+            column_config={
+                "day": st.column_config.NumberColumn("Day", min_value=1, step=1, required=True),
+                "place": st.column_config.TextColumn("Place", disabled=True),
+                "country": st.column_config.TextColumn("Country", disabled=True),
+                "description": st.column_config.TextColumn("Description", width="medium"),
+                # הגדרת עמודת הקישור ככפתור לחיץ
+                "google_maps_url": st.column_config.LinkColumn(
+                    "Maps Link",
+                    help="Click to open in Google Maps",
+                    validate=r"^https://.*",  # וידוא שמדובר בקישור תקין
+                    display_text="📍 Open Map"  # טקסט שיופיע במקום ה-URL הארוך
+                )
+            },
+            num_rows="dynamic",
+            use_container_width=True,
+            key="itinerary_editor"
+        )
+
+        if st.button("💾 Save Changes", type="primary", use_container_width=True):
+            st.session_state.all_itineraries[st.session_state.current_route] = edited_df.sort_values(by='day')
+            st.success("Changes saved!")
             st.rerun()
 
-    curr_itinerary = curr_itinerary.sort_values(by='day')
-    edited_df = st.data_editor(
-        curr_itinerary,
-        column_order=("day", "place", "country", "description"),
-        column_config={
-            "day": st.column_config.NumberColumn("Day", min_value=1, step=1, required=True),
-            "place": st.column_config.TextColumn("Place", disabled=True),
-            "description": st.column_config.TextColumn("Description", width="large")
-        },
-        num_rows="dynamic", use_container_width=True, key="itinerary_editor"
-    )
-
-    if st.button("💾 Save Changes", type="primary", use_container_width=True):
-        st.session_state.all_itineraries[st.session_state.current_route] = edited_df.sort_values(by='day')
-        st.success("Changes saved!")
-        st.rerun()
-
-    st.write("---")
+        st.write("---")
     # --- PDF & KML Export Section ---
 
     st.subheader("📤 Export Your Guide & Map")
@@ -473,3 +512,4 @@ if not curr_itinerary.empty:
 
             except Exception as e:
                 st.error(f"Error during export: {e}")
+    st.markdown("<a class='back-to-top' href='#top'>Top</a>", unsafe_allow_html=True)
