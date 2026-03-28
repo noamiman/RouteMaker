@@ -3,7 +3,6 @@ import torch
 import os
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-
 class TravelClassifier:
     def __init__(self, model_path, device=None):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -18,7 +17,7 @@ class TravelClassifier:
         self.model.eval()
 
     def predict(self, text):
-        """מבצע חיזוי לטקסט בודד."""
+        """predicts the labels for a single text input."""
         inputs = self.tokenizer(text, return_tensors="pt", padding=True,
                                 truncation=True, max_length=128).to(self.device)
 
@@ -27,11 +26,10 @@ class TravelClassifier:
             predictions = torch.clamp(outputs.logits * 10.0, 0, 10).round().int()
 
         results = dict(zip(self.label_keys, predictions[0].tolist()))
-        results["short_summary"] = "Analyzed by local DeBERTa model"
         return results
 
     def _enrich_row(self, row):
-        """מתודת עזר פנימית לעבודה עם Pandas."""
+        """processes a single row of the DataFrame and returns the predictions as a Series."""
         try:
             prediction = self.predict(str(row['description']))
             return pd.Series(prediction)
@@ -40,13 +38,13 @@ class TravelClassifier:
             return pd.Series({k: None for k in self.label_keys + ["short_summary"]})
 
     def process_csv(self, file_path, force_update=False):
-        """מעבד קובץ CSV בודד ומעדכן אותו."""
+        """peocesses a single CSV file, enriches it with predictions, and saves the updated file."""
         if not file_path.endswith(".csv"):
             return
 
         df = pd.read_csv(file_path)
 
-        # בדיקה אם הקובץ כבר עובד (לפי קיום עמודות הדירוג)
+        # check if the file already has the label columns and skip processing if they exist (unless force_update is True)
         if not force_update and all(col in df.columns for col in self.label_keys):
             print(f"Skipping {os.path.basename(file_path)} - already enriched.")
             return
@@ -59,24 +57,24 @@ class TravelClassifier:
         print(f"Successfully updated {file_path}")
 
     def process_all_csvs(self, root_dir, force_update=False):
-        """סורק תיקייה ומעבד את כל קבצי ה-CSV הרלוונטיים."""
+        """processes all CSV files in the specified directory and its subdirectories."""
         print(f"Starting batch processing in: {root_dir}")
 
         for root, _, files in os.walk(root_dir):
             for file in files:
-                if file.endswith(".csv") and not file.endswith("_enriched.csv"):  # סינון קבצים אם צריך
+                if file.endswith(".csv") and not file.endswith("_enriched.csv"):
                     file_path = os.path.join(root, file)
                     self.process_csv(file_path, force_update=force_update)
 
         print("Batch processing complete.")
 
 
-# --- דוגמה לשימוש ---
+# --- using the classifier ---
 if __name__ == "__main__":
     MODEL_DIR = "../model/tourism_model_checkpoint_2240"
-    DATA_DIR = "Unified_Countries/Vietnam_processed.csv"
+    DATA_DIR = "../finalData/Unified_Countries/travel_data_Italy.csv"
 
     classifier = TravelClassifier(MODEL_DIR)
 
-    # עכשיו כל מה שצריך זה שורה אחת:
+    # process a single file
     classifier.process_csv(DATA_DIR)

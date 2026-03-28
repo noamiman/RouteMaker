@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+
 from output.pdf_maker import pdfMaker, GoogleMapsIntegrator
 
 OUTPUT_FOLDER = "saved_itineraries"
@@ -106,11 +107,14 @@ def load_all_countries_data():
     """
     base_path = os.path.dirname(__file__)
     # define the path to the folder containing the unified country CSVs, relative to this file
-    folder_path = os.path.join(base_path, "..", "DataProcess", "Unified_Countries")
+    # folder_path = os.path.join(base_path, "..", "DataProcess", "Unified_Countries")
+    folder_path = os.path.join(base_path, "..", "scrappers")
+
 
     # fallback: if the relative path doesn't work try an absolute path
     if not os.path.exists(folder_path):
-        folder_path = "DataProcess/Unified_Countries"
+        folder_path = "../scrappers"
+        # folder_path = "../DataProcess/Unified_Countries"
 
     all_dfs = []
 
@@ -130,6 +134,7 @@ def load_all_countries_data():
 
             # concatenate all DataFrames into one
             full_df = pd.concat(all_dfs, ignore_index=True)
+            print(full_df.head(5))
             return full_df
         else:
             st.error(f"Directory not found: {folder_path}")
@@ -157,6 +162,46 @@ with st.sidebar:
     st.title("⚙️ Trip Settings")
     customer_name = st.text_input("Traveler Name", "Avi Ron")
 
+    # --- Country & Region Selection ---
+    st.sidebar.header("Filters")
+
+    if not df.empty:
+        # 1. בחירת מדינה
+        # המרה לסטרינג וסינון ערכים ריקים לפני המיון
+        countries = sorted([str(c) for c in df['country'].unique() if pd.notna(c)])
+        selected_country = st.sidebar.selectbox("Select Country", countries)
+
+        # פילטר ראשוני לפי המדינה שנבחרה כדי לקבל את האזורים הרלוונטיים
+        country_df = df[df['country'] == selected_country]
+
+        # 2. בחירת Region (דינמי לפי המדינה)
+        # מוציאים את כל האזורים הייחודיים, מסירים ערכי NaN וממיינים
+        available_regions = country_df['region'].dropna().unique().tolist()
+        available_regions = sorted([str(r) for r in available_regions if str(r).strip() != ""])
+
+        # הוספת אופציית "All Regions" כברירת מחדל
+        region_options = ["All Regions"] + available_regions
+
+        selected_region = st.sidebar.selectbox(
+            "Select Region",
+            options=region_options,
+            help=f"Available regions in {selected_country}"
+        )
+
+        # פילטר סופי של ה-DataFrame לפי המדינה והאזור
+        if selected_region != "All Regions":
+            filtered_country_df = country_df[country_df['region'] == selected_region]
+        else:
+            filtered_country_df = country_df
+
+        # עדכון המשתנה country_df שבו משתמשים בהמשך הקוד (בלוגיקת הסינון המרכזית)
+        country_df = filtered_country_df
+
+    else:
+        st.sidebar.warning("No data found")
+        selected_country = None
+        selected_region = "All Regions"
+        country_df = df
     # --- Route Management ---
     st.divider()
     st.subheader("🗺️ Manage Routes")
@@ -223,19 +268,6 @@ with st.sidebar:
             else:
                 st.error("Please provide a unique name.")
 
-    # --- Country Selection ---
-    st.sidebar.header("Filters")
-
-    if not df.empty:
-        # use the unique countries from the loaded DataFrame to populate the selectbox, ensuring that it reflects the actual data available. This also allows for dynamic updates if new country data is added in the future.
-        selected_country = st.sidebar.selectbox("Select Country", df['country'].unique())
-
-        # filter by the country
-        country_df = df[df['country'] == selected_country]
-    else:
-        st.sidebar.warning("No data found")
-        selected_country = None
-        country_df = df
 
     # --- 3. Key Stations & Emergency ---
     st.subheader("🏥 Key Stations & Emergency")
@@ -290,15 +322,13 @@ with st.sidebar:
             if col_btn.button("🗑️", key=f"del_st_{i}"):
                 st.session_state.stations.pop(i)
                 st.rerun()
-
 # --- Main Area: Discovery ---
 st.title(f"🌍 Editing: {st.session_state.current_route}")
 st.markdown("<div id='top'></div>", unsafe_allow_html=True)
 
 if not df.empty:
-    # autocomplete search box for places, showing all places from the entire dataset (not just the selected country) to allow users to find specific attractions even if they don't know which country they belong to. The search box will be placed above the category filters for better visibility and accessibility.
+    # 1. Autocomplete Search
     all_place_names = ["-- Search or Select a Place --"] + sorted(df['place'].unique().tolist())
-
     selected_place_name = st.selectbox(
         "🔍 Search for a specific place (Global):",
         options=all_place_names,
@@ -306,15 +336,25 @@ if not df.empty:
         help="Start typing to find a specific attraction from any country in the database."
     )
 
-    # chose from categories
+    # 2. Category Filters
     categories_list = ['nature', 'adventure', 'culture', 'food', 'romance', 'family', 'cost', 'relaxation']
     selected_cats = st.multiselect(
         "🎯 Filter by Categories",
         options=[c.capitalize() for c in categories_list],
-        default=["Nature"]
+        default=[],
+        help="Select categories to filter results"
     )
 
-    # make sliders for each selected category, allowing users to set a minimum rating for each category. This will help them find places that match their preferences more closely. The sliders will only appear if the user has selected at least one category from the multiselect.
+    # 3. Filter by Place Type
+    all_types = sorted(df['place_type'].astype(str).unique().tolist())
+    selected_types = st.multiselect(
+        "🏘️ Filter by Place Type",
+        options=all_types,
+        default=None,
+        help="Select specific types of places like Hotels, Museums, Parks, etc."
+    )
+
+    # 4. Dynamic Sliders (מציג סליידרים רק אם נבחרו קטגוריות)
     cat_thresholds = {}
     if selected_cats:
         st.write("---")
@@ -325,74 +365,86 @@ if not df.empty:
                 cat_thresholds[cat.lower()] = st.slider(f"Min {cat}", 0, 10, 5, key=f"slider_{cat}")
         st.write("---")
 
-    # --- filter logic ---
-    # check if the user is actively searching for a specific place (i.e., if the selected place name is not the default placeholder). If they are searching, we will bypass the category filters and show only the selected place. If they are not searching, we will apply the category filters to show relevant places based on their preferences.
+    # --- FILTER LOGIC ---
     is_searching = selected_place_name != "-- Search or Select a Place --"
 
     if is_searching:
-        # if searching for a specific place, we will ignore the category filters and show only the place that matches the selected name. This allows users to quickly find and add a specific attraction without having to adjust the filters.
+        # אם מחפשים מקום ספציפי - מתעלמים משאר הפילטרים
         filtered_df = df[df['place'] == selected_place_name].copy()
     else:
-        # else, filter by the selected country (if any) and then apply the category filters. This will show users a list of attractions that match their preferences based on the categories they selected and the minimum ratings they set.
+        # מתחילים עם עותק של הנתונים
         filtered_df = df.copy()
+
+        # 1. סינון לפי מדינה
         if selected_country:
             filtered_df = filtered_df[filtered_df['country'] == selected_country]
 
+        # 2. סינון לפי Region (התוספת החדשה!)
+        # אנחנו בודקים אם נבחר region ספציפי (שהוא לא "All Regions")
+        if 'selected_region' in locals() and selected_region != "All Regions":
+            filtered_df = filtered_df[filtered_df['region'] == selected_region]
+
+        # 3. סינון לפי סוג מקום
+        if selected_types:
+            filtered_df = filtered_df[filtered_df['place_type'].astype(str).isin(selected_types)]
+
+        # 4. סינון לפי קטגוריות ודירוג מינימלי
         if selected_cats:
-            for cat, threshold in cat_thresholds.items():
-                filtered_df = filtered_df[filtered_df[cat] >= threshold]
+            for cat in selected_cats:
+                cat_lower = cat.lower()
+                threshold = cat_thresholds.get(cat_lower, 0)
+                filtered_df = filtered_df[filtered_df[cat_lower] >= threshold]
 
-        # pull the rated categories for the selected place and calculate a combined score based on the average of the selected categories. This will allow us to sort the results by relevance to the user's preferences, showing the most relevant attractions at the top of the list. The combined score will only be calculated if there are results to show and if the user has selected at least one category.
-        if not filtered_df.empty and selected_cats:
-            available_cats = [c.lower() for c in selected_cats if c.lower() in filtered_df.columns]
-            filtered_df['combined_score'] = filtered_df[available_cats].mean(axis=1)
-            filtered_df = filtered_df.sort_values(by='combined_score', ascending=False)
-
-    # --- show result ---
-    # the label for the results expander will dynamically show the number of places found based on the current filters and search term. This provides immediate feedback to users about how many attractions match their criteria, helping them understand the impact of their selections and encouraging them to adjust filters if they want to see more or fewer results.
+            # מיון לפי הציון הממוצע של הקטגוריות שנבחרו
+            if not filtered_df.empty:
+                available_cats = [c.lower() for c in selected_cats if c.lower() in filtered_df.columns]
+                filtered_df['combined_score'] = filtered_df[available_cats].mean(axis=1)
+                filtered_df = filtered_df.sort_values(by='combined_score', ascending=False)
+    # --- SHOW RESULTS ---
     results_label = f"📍 View Results ({len(filtered_df)} found)"
 
     with st.expander(results_label, expanded=is_searching):
         if not filtered_df.empty:
             for idx, row in filtered_df.iterrows():
                 with st.container():
-                    c1, c2, c3 = st.columns([3, 1, 1])
-                    with c1:
-                        st.markdown(f"### {row['place']} ({row['country']})")
+                    col_info, col_action = st.columns([3.5, 1.5])
+
+                    with col_info:
+                        p_type = row.get('place_type', 'General')
+                        st.markdown(f"### {row['place']}  `{p_type}`")
+
+                        location_line = f"📍 **{row['country']}**"
+                        region_val = row.get('region')
+                        if pd.notna(region_val) and str(region_val).strip() != "":
+                            location_line += f" | {region_val}"
+                        st.markdown(location_line)
+
+                        # כפתור מפה
+                        maps_url = row.get('google_maps_url')
+                        if pd.notna(maps_url) and maps_url != "":
+                            btn_col, _ = st.columns([1.2, 2])
+                            with btn_col:
+                                st.link_button("🌐 Open Maps", maps_url, use_container_width=True)
+
                         st.write(row['description'])
 
-                        # RATING DISPLAY LOGIC:
-                        # Specific Search: Show all categories with a score > 0.
+                        # הצגת דירוגים
                         if is_searching:
-                            all_ratings = [f"**{c.capitalize()}:** {row[c]}" for c in categories_list if row[c] > 0]
-                            st.markdown(f"⭐ {' | '.join(all_ratings)}")
-
-                        # Filter Mode: Show only the categories explicitly selected by the user.
+                            ratings = [f"**{c.capitalize()}:** {row[c]}" for c in categories_list if row[c] > 0]
+                            st.markdown(f"⭐ {' • '.join(ratings)}")
                         elif selected_cats:
-                            ratings_text = " | ".join(
+                            ratings_text = " • ".join(
                                 [f"**{c.capitalize()}:** {row[c.lower()]}" for c in selected_cats])
                             st.markdown(f"⭐ {ratings_text}")
-
-                        # Default View: No search and no filters selected.
-                        # We display all relevant ratings (score > 0) to give the user an immediate overview
-                        # of the attraction's characteristics without requiring any interaction.
                         else:
                             default_ratings = [f"**{c.capitalize()}:** {row[c]}" for c in categories_list if row[c] > 0]
                             if default_ratings:
-                                st.markdown(f"⭐ {' | '.join(default_ratings)}")
+                                st.markdown(f"⭐ {' • '.join(default_ratings)}")
 
-                        st.caption(f"**Summary:** {row['short_summary']}")
-
-                        maps_url = row.get('google_maps_url')
-                        if pd.notna(maps_url) and maps_url != "":
-                            st.link_button("📍 See in Maps", maps_url, use_container_width=False)
-
-                    with c2:
+                    with col_action:
+                        st.write("##")
                         day_val = st.number_input("Assign Day", min_value=1, max_value=30, value=1, key=f"day_{idx}")
-
-                    with c3:
-                        st.write("##")  # Alignment spacer
-                        if st.button("➕ Add", key=f"btn_{idx}", use_container_width=True):
+                        if st.button("➕ Add to Trip", key=f"btn_{idx}", use_container_width=True, type="primary"):
                             new_entry = row.copy()
                             new_entry['day'] = day_val
                             curr_name = st.session_state.current_route
@@ -400,10 +452,11 @@ if not df.empty:
                                 [st.session_state.all_itineraries[curr_name], pd.DataFrame([new_entry])],
                                 ignore_index=True
                             )
-                            st.toast(f"Added {row['place']} to {curr_name}!")
+                            st.toast(f"Added **{row['place']}**!", icon="✅")
+
                     st.divider()
         else:
-            st.info("No places match your criteria. Try adjusting the filters or search term.")
+            st.info("No places match your criteria.")
 
 # --- Itinerary Management ---
     st.header(f"📝 {st.session_state.current_route} Itinerary")
@@ -426,18 +479,21 @@ if not df.empty:
         edited_df = st.data_editor(
             curr_itinerary,
             # הוספנו את google_maps_url לסדר העמודות
-            column_order=("day", "place", "country", "description", "google_maps_url"),
+            column_order=("day", "place", "country", "region", "place_type", "description", "google_maps_url"),
             column_config={
                 "day": st.column_config.NumberColumn("Day", min_value=1, step=1, required=True),
                 "place": st.column_config.TextColumn("Place", disabled=True),
+                "region": st.column_config.TextColumn("Region", disabled=True),
+                "place_type": st.column_config.TextColumn("Place_Type", disabled=True),
                 "country": st.column_config.TextColumn("Country", disabled=True),
-                "description": st.column_config.TextColumn("Description", width="medium"),
+                "description": st.column_config.TextColumn("Description", width="medium", disabled=True),
                 # הגדרת עמודת הקישור ככפתור לחיץ
                 "google_maps_url": st.column_config.LinkColumn(
                     "Maps Link",
                     help="Click to open in Google Maps",
-                    validate=r"^https://.*",  # וידוא שמדובר בקישור תקין
-                    display_text="📍 Open Map"  # טקסט שיופיע במקום ה-URL הארוך
+                    validate=r"^https://.*",
+                    display_text="📍 Open Map",
+                    disabled=True
                 )
             },
             num_rows="dynamic",
@@ -451,65 +507,69 @@ if not df.empty:
             st.rerun()
 
         st.write("---")
-    # --- PDF & KML Export Section ---
+        # --- PDF & KML Export Section ---
+        st.subheader("📤 Export Your Guide & Map")
 
-    st.subheader("📤 Export Your Guide & Map")
+        if st.button("🚀 Generate PDF & KML Map", use_container_width=True):
+            with st.spinner("Processing files..."):
+                try:
+                    # --- שלב קריטי: ניקוי הנתונים לפני ייצוא ---
+                    # 1. מסירים שורות שאין בהן שם מקום (שורות ריקות מהעורך)
+                    clean_itinerary = curr_itinerary.dropna(subset=['place']).copy()
 
-    if st.button("🚀 Generate PDF & KML Map", use_container_width=True):
-        with st.spinner("Processing files..."):
-            try:
-                # 1. הכנת שמות הקבצים והנתיבים
-                route_name = st.session_state.current_route.replace(" ", "_")
-                pdf_filename = f"{route_name}.pdf"
-                kml_filename = f"{route_name}.kml"
+                    # 2. מוודאים שעמודת היום היא מספר שלם (int) וממלאים חסרים ב-1
+                    clean_itinerary['day'] = pd.to_numeric(clean_itinerary['day'], errors='coerce').fillna(1).astype(
+                        int)
 
-                pdf_path = os.path.join(OUTPUT_FOLDER, pdf_filename)
-                kml_path = os.path.join(OUTPUT_FOLDER, kml_filename)
+                    # 3. ניקוי ערכי NaN כלליים בטקסט כדי שלא יופיע "nan" ב-PDF
+                    clean_itinerary = clean_itinerary.fillna("")
 
-                # 2. שימוש במחלקת Integrator (כולל ה-KML)
-                integrator = GoogleMapsIntegrator(curr_itinerary)
+                    if clean_itinerary.empty:
+                        st.error("The itinerary is empty. Add some places first!")
+                        st.stop()
+                    # -------------------------------------------
 
-                # יצירת ה-URL למפות
-                full_route_url = integrator.generate_directions_url()
+                    # 1. הכנת שמות הקבצים והנתיבים
+                    route_name = st.session_state.current_route.replace(" ", "_")
+                    pdf_filename = f"{route_name}.pdf"
+                    kml_filename = f"{route_name}.kml"
 
-                # יצירת קובץ ה-KML ושמירתו בתיקייה
-                integrator.create_kml_file(kml_path)
+                    pdf_path = os.path.join(OUTPUT_FOLDER, pdf_filename)
+                    kml_path = os.path.join(OUTPUT_FOLDER, kml_filename)
 
-                # 3. יצירת ה-PDF ושמירתו בתיקייה
-                df_stations = pd.DataFrame(st.session_state.stations) if st.session_state.stations else None
-                maker = pdfMaker(
-                    curr_itinerary,
-                    customer_name=customer_name,
-                    route_url=full_route_url,
-                    stations_data=df_stations
-                )
-                maker.create_pdf(pdf_path)
+                    # 2. שימוש במחלקת Integrator עם הנתונים הנקיים
+                    integrator = GoogleMapsIntegrator(clean_itinerary)
 
-                st.success(f"✅ Files saved to: `{OUTPUT_FOLDER}/`")
+                    # יצירת ה-URL למפות
+                    full_route_url = integrator.generate_directions_url()
 
-                # 4. כפתורי הורדה למשתמש
-                col_pdf, col_kml = st.columns(2)
+                    # יצירת קובץ ה-KML
+                    integrator.create_kml_file(kml_path)
 
-                with col_pdf:
-                    with open(pdf_path, "rb") as f:
-                        st.download_button(
-                            "📥 Download PDF",
-                            f,
-                            file_name=pdf_filename,
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
+                    # 3. יצירת ה-PDF עם הנתונים הנקיים
+                    df_stations = pd.DataFrame(st.session_state.stations).fillna(
+                        "") if st.session_state.stations else None
 
-                with col_kml:
-                    with open(kml_path, "r", encoding="utf-8") as f:
-                        st.download_button(
-                            "🗺️ Download KML (Google Earth)",
-                            f,
-                            file_name=kml_filename,
-                            mime="application/vnd.google-earth.kml+xml",
-                            use_container_width=True
-                        )
+                    maker = pdfMaker(
+                        clean_itinerary,  # משתמשים בגרסה הנקייה
+                        customer_name=customer_name,
+                        route_url=full_route_url,
+                        stations_data=df_stations
+                    )
+                    maker.create_pdf(pdf_path)
 
-            except Exception as e:
-                st.error(f"Error during export: {e}")
-    st.markdown("<a class='back-to-top' href='#top'>Top</a>", unsafe_allow_html=True)
+                    st.success(f"✅ Files saved to: `{OUTPUT_FOLDER}/`")
+
+                    # 4. כפתורי הורדה (נשאר ללא שינוי)
+                    col_pdf, col_kml = st.columns(2)
+                    with col_pdf:
+                        with open(pdf_path, "rb") as f:
+                            st.download_button("📥 Download PDF", f, file_name=pdf_filename, mime="application/pdf",
+                                               use_container_width=True)
+                    with col_kml:
+                        with open(kml_path, "rb") as f:  # שיניתי ל-"rb" ליתר ביטחון
+                            st.download_button("🗺️ Download KML", f, file_name=kml_filename,
+                                               mime="application/vnd.google-earth.kml+xml", use_container_width=True)
+
+                except Exception as e:
+                    st.error(f"Error during export: {e}")

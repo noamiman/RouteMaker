@@ -8,7 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from scrappers.base_scrapper import BaseScraper
-from DataProcess.DataProcessor import TravelDataProcessor
 
 class bucketlistlyScraper(BaseScraper):
     def extract_links(self, category_url):
@@ -74,18 +73,14 @@ class bucketlistlyScraper(BaseScraper):
                     links_in_p = p.find_elements(By.TAG_NAME, "a")
                     for link_element in links_in_p:
                         name_found = link_element.text.strip()
-                        # בתוך הלופ של הסקרייפר - רק איסוף נתונים
                         if name_found in target_names:
                             results.append({
                                 "place": name_found,
-                                "raw_description": p.text.replace(name_found, "").strip(),  # שומרים את המקור
+                                "description": p.text.strip(),
                                 "google_maps_url": link_element.get_attribute("href"),
                                 "country": parent_place
                             })
 
-                        # מחוץ ללופ - עיבוד מרוכז (או פשוט קריאה למעבד)
-                        for res in results:
-                            res["description"] = TravelDataProcessor.process_description(res["raw_description"])
 
             if len(results)<3:
                 print(f"DEBUG: Falling back to general link search for {post_title}")
@@ -97,7 +92,8 @@ class bucketlistlyScraper(BaseScraper):
                         if place_name and len(place_name) > 1:
                             try:
                                 parent_p = l.find_element(By.XPATH, "./..")
-                                description = parent_p.text.replace(place_name, "").strip()
+                                description = parent_p.text.strip()
+                                # description = parent_p.text.replace(place_name, "").strip()
                             except:
                                 description = "No description available"
 
@@ -127,7 +123,7 @@ if __name__ == "__main__":
     scraper = bucketlistlyScraper(driver, web_name="Bucketlistly")
 
     my_categories = {
-        "South-Korea": "https://www.bucketlistly.blog/destinations/south-korea"
+        "Albania": "https://www.bucketlistly.blog/destinations/albania"
     }
 
     try:

@@ -15,4 +15,8 @@ sentencepiece
 protobuf
 Pillow
 streamlit
-geopy
+bs4
+langchain_groq
+ollama
+tqdm
+langchain_ollama

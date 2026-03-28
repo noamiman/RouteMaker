@@ -22,6 +22,8 @@ model/tourism_model_refined
 model/tourism_model
 model/tourism_model_checkpoint_1625
 
+.env
+
 !for_full_fineTune.json
 !reviews_with_rates_10k.json
 !travel_edge_reviews_1500.json
@@ -32,7 +34,7 @@ DataProcess/Unified_Countries/*.csv
 ScrapedData/
 *.csv
 *.json
-!DataProcess/Unified_Countries/Thailand_processed.csv
+!finalData/Unified_Countries/Thailand_processed.csv
 # --- Streamlit ---
 .streamlit/
 static/
