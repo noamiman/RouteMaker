@@ -108,12 +108,11 @@ def load_all_countries_data():
     base_path = os.path.dirname(__file__)
     # define the path to the folder containing the unified country CSVs, relative to this file
     # folder_path = os.path.join(base_path, "..", "DataProcess", "Unified_Countries")
-    folder_path = os.path.join(base_path, "..", "scrappers")
-
+    folder_path = os.path.join(base_path, "..", "finalData")
 
     # fallback: if the relative path doesn't work try an absolute path
     if not os.path.exists(folder_path):
-        folder_path = "../scrappers"
+        folder_path = "../finalData"
         # folder_path = "../DataProcess/Unified_Countries"
 
     all_dfs = []
@@ -134,7 +133,6 @@ def load_all_countries_data():
 
             # concatenate all DataFrames into one
             full_df = pd.concat(all_dfs, ignore_index=True)
-            print(full_df.head(5))
             return full_df
         else:
             st.error(f"Directory not found: {folder_path}")
@@ -156,6 +154,10 @@ if 'current_route' not in st.session_state:
     st.session_state.current_route = "My First Trip"
 if 'stations' not in st.session_state:
     st.session_state.stations = []
+if 'confirm_delete_route' not in st.session_state:
+    st.session_state.confirm_delete_route = False
+if 'confirm_clear_route' not in st.session_state:
+    st.session_state.confirm_clear_route = False
 
 # --- Sidebar: Settings & Emergency ---
 with st.sidebar:
@@ -166,20 +168,21 @@ with st.sidebar:
     st.sidebar.header("Filters")
 
     if not df.empty:
-        # 1. בחירת מדינה
-        # המרה לסטרינג וסינון ערכים ריקים לפני המיון
+
         countries = sorted([str(c) for c in df['country'].unique() if pd.notna(c)])
         selected_country = st.sidebar.selectbox("Select Country", countries)
 
-        # פילטר ראשוני לפי המדינה שנבחרה כדי לקבל את האזורים הרלוונטיים
+        # initial filtering of the DataFrame to the selected country to determine available regions for that country. This ensures that the region dropdown is dynamically populated based on the user's country selection, providing a more relevant and streamlined filtering experience.
         country_df = df[df['country'] == selected_country]
 
-        # 2. בחירת Region (דינמי לפי המדינה)
-        # מוציאים את כל האזורים הייחודיים, מסירים ערכי NaN וממיינים
-        available_regions = country_df['region'].dropna().unique().tolist()
+        # dinamic region dropdown based on the selected country, ensuring that users can only select regions that are relevant to their chosen country. This enhances the user experience by preventing irrelevant options and making the filtering process more intuitive.
+        if 'region' in country_df.columns:
+            available_regions = country_df['region'].dropna().unique().tolist()
+        else:
+            available_regions = []
         available_regions = sorted([str(r) for r in available_regions if str(r).strip() != ""])
 
-        # הוספת אופציית "All Regions" כברירת מחדל
+        # all regions dropdown includes an "All Regions" option at the top, allowing users to easily reset the region filter and view all attractions within the selected country without having to manually deselect specific regions. This provides a convenient way for users to explore the full range of options available in that country.
         region_options = ["All Regions"] + available_regions
 
         selected_region = st.sidebar.selectbox(
@@ -188,13 +191,13 @@ with st.sidebar:
             help=f"Available regions in {selected_country}"
         )
 
-        # פילטר סופי של ה-DataFrame לפי המדינה והאזור
+        # filter the country_df based on the selected region, ensuring that the main DataFrame used for displaying attractions is updated according to the user's region selection. If "All Regions" is selected, the filter is not applied, allowing users to see all attractions within the selected country regardless of region.
         if selected_region != "All Regions":
             filtered_country_df = country_df[country_df['region'] == selected_region]
         else:
             filtered_country_df = country_df
 
-        # עדכון המשתנה country_df שבו משתמשים בהמשך הקוד (בלוגיקת הסינון המרכזית)
+        # update the main DataFrame to be used for displaying attractions based on the selected country and region, ensuring that the app's content is relevant to the user's choices. This filtered DataFrame will be used in the main area of the app to show attractions that match the selected criteria.
         country_df = filtered_country_df
 
     else:
@@ -227,9 +230,14 @@ with st.sidebar:
         st.write("##")
         if st.button("🗑️", help="Delete current route", key="del_active_route"):
             if len(route_list) > 1:
-                del st.session_state.all_itineraries[st.session_state.current_route]
-                st.session_state.current_route = list(st.session_state.all_itineraries.keys())[0]
-                st.rerun()
+                if st.session_state.get('confirm_delete_route', False):
+                    del st.session_state.all_itineraries[st.session_state.current_route]
+                    st.session_state.current_route = list(st.session_state.all_itineraries.keys())[0]
+                    st.session_state.confirm_delete_route = False
+                    st.rerun()
+                else:
+                    st.session_state.confirm_delete_route = True
+                    st.warning(f"⚠️ Click again to confirm deleting '{st.session_state.current_route}'")
             else:
                 st.warning("Cannot delete the only route.")
 
@@ -346,7 +354,10 @@ if not df.empty:
     )
 
     # 3. Filter by Place Type
-    all_types = sorted(df['place_type'].astype(str).unique().tolist())
+    if 'place_type' in df.columns:
+        all_types = sorted(df['place_type'].astype(str).unique().tolist())
+    else:
+        all_types = []
     selected_types = st.multiselect(
         "🏘️ Filter by Place Type",
         options=all_types,
@@ -354,7 +365,6 @@ if not df.empty:
         help="Select specific types of places like Hotels, Museums, Parks, etc."
     )
 
-    # 4. Dynamic Sliders (מציג סליידרים רק אם נבחרו קטגוריות)
     cat_thresholds = {}
     if selected_cats:
         st.write("---")
@@ -369,37 +379,30 @@ if not df.empty:
     is_searching = selected_place_name != "-- Search or Select a Place --"
 
     if is_searching:
-        # אם מחפשים מקום ספציפי - מתעלמים משאר הפילטרים
         filtered_df = df[df['place'] == selected_place_name].copy()
     else:
-        # מתחילים עם עותק של הנתונים
         filtered_df = df.copy()
 
-        # 1. סינון לפי מדינה
         if selected_country:
             filtered_df = filtered_df[filtered_df['country'] == selected_country]
 
-        # 2. סינון לפי Region (התוספת החדשה!)
-        # אנחנו בודקים אם נבחר region ספציפי (שהוא לא "All Regions")
         if 'selected_region' in locals() and selected_region != "All Regions":
             filtered_df = filtered_df[filtered_df['region'] == selected_region]
 
-        # 3. סינון לפי סוג מקום
         if selected_types:
             filtered_df = filtered_df[filtered_df['place_type'].astype(str).isin(selected_types)]
 
-        # 4. סינון לפי קטגוריות ודירוג מינימלי
         if selected_cats:
             for cat in selected_cats:
                 cat_lower = cat.lower()
                 threshold = cat_thresholds.get(cat_lower, 0)
                 filtered_df = filtered_df[filtered_df[cat_lower] >= threshold]
 
-            # מיון לפי הציון הממוצע של הקטגוריות שנבחרו
             if not filtered_df.empty:
                 available_cats = [c.lower() for c in selected_cats if c.lower() in filtered_df.columns]
                 filtered_df['combined_score'] = filtered_df[available_cats].mean(axis=1)
                 filtered_df = filtered_df.sort_values(by='combined_score', ascending=False)
+
     # --- SHOW RESULTS ---
     results_label = f"📍 View Results ({len(filtered_df)} found)"
 
@@ -428,7 +431,6 @@ if not df.empty:
 
                         st.write(row['description'])
 
-                        # הצגת דירוגים
                         if is_searching:
                             ratings = [f"**{c.capitalize()}:** {row[c]}" for c in categories_list if row[c] > 0]
                             st.markdown(f"⭐ {' • '.join(ratings)}")
@@ -445,14 +447,19 @@ if not df.empty:
                         st.write("##")
                         day_val = st.number_input("Assign Day", min_value=1, max_value=30, value=1, key=f"day_{idx}")
                         if st.button("➕ Add to Trip", key=f"btn_{idx}", use_container_width=True, type="primary"):
-                            new_entry = row.copy()
-                            new_entry['day'] = day_val
                             curr_name = st.session_state.current_route
-                            st.session_state.all_itineraries[curr_name] = pd.concat(
-                                [st.session_state.all_itineraries[curr_name], pd.DataFrame([new_entry])],
-                                ignore_index=True
-                            )
-                            st.toast(f"Added **{row['place']}**!", icon="✅")
+                            curr_itinerary = st.session_state.all_itineraries[curr_name]
+                            # Check for duplicates
+                            if not curr_itinerary.empty and (curr_itinerary['place'] == row['place']).any():
+                                st.warning(f"⚠️ '{row['place']}' is already in this trip!")
+                            else:
+                                new_entry = row.copy()
+                                new_entry['day'] = day_val
+                                st.session_state.all_itineraries[curr_name] = pd.concat(
+                                    [curr_itinerary, pd.DataFrame([new_entry])],
+                                    ignore_index=True
+                                )
+                                st.toast(f"Added **{row['place']}**!", icon="✅")
 
                     st.divider()
         else:
@@ -463,22 +470,70 @@ if not df.empty:
     curr_itinerary = st.session_state.all_itineraries[st.session_state.current_route]
 
     if not curr_itinerary.empty:
+        # Trip Overview Statistics
+        with st.container():
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("📅 Total Days", int(curr_itinerary['day'].max()))
+            with col2:
+                st.metric("📍 Places", len(curr_itinerary))
+            with col3:
+                countries_count = curr_itinerary['country'].nunique()
+                st.metric("🌍 Countries", countries_count)
+            with col4:
+                if 'place_type' in curr_itinerary.columns:
+                    types_count = curr_itinerary['place_type'].nunique()
+                    st.metric("🏘️ Types", types_count)
+        st.divider()
+        
         col_info, col_clear = st.columns([4, 1])
         with col_info:
             st.info(f"Editing **{st.session_state.current_route}**. Change 'Day' and save to re-sort.")
         with col_clear:
             if st.button("🗑️ Clear This Route", type="secondary", use_container_width=True):
-                st.session_state.all_itineraries[st.session_state.current_route] = pd.DataFrame(
-                    columns=df.columns.tolist() + ['day'])
-                st.rerun()
+                if st.session_state.get('confirm_clear_route', False):
+                    st.session_state.all_itineraries[st.session_state.current_route] = pd.DataFrame(
+                        columns=df.columns.tolist() + ['day'])
+                    st.session_state.confirm_clear_route = False
+                    st.rerun()
+                else:
+                    st.session_state.confirm_clear_route = True
+                    st.warning(f"⚠️ Click again to confirm clearing '{st.session_state.current_route}'")
 
-        # מיון לפי יום
+        # sort the itinerary by 'day' before displaying
         curr_itinerary = curr_itinerary.sort_values(by='day')
 
-        # עריכת הטבלה עם עמודת קישור
+        # Timeline View
+        with st.expander("📅 Timeline View", expanded=False):
+            days = sorted(curr_itinerary['day'].unique())
+            for day in days:
+                day_places = curr_itinerary[curr_itinerary['day'] == day]
+                st.markdown(f"### Day {int(day)} ({len(day_places)} places)")
+                for _, place_row in day_places.iterrows():
+                    # Create a visual card for each place in the timeline
+                    col_icon, col_details = st.columns([0.8, 5])
+                    with col_icon:
+                        place_type = place_row.get('place_type', 'Place')
+                        if place_type == 'Hotel':
+                            st.markdown("🏨")
+                        elif place_type == 'Restaurant':
+                            st.markdown("🍽️")
+                        elif place_type == 'Museum':
+                            st.markdown("🏛️")
+                        elif place_type == 'Park':
+                            st.markdown("🌳")
+                        elif place_type == 'Beach':
+                            st.markdown("🏖️")
+                        else:
+                            st.markdown("📍")
+                    with col_details:
+                        st.markdown(f"**{place_row['place']}** • {place_row.get('country', '')} • {place_row.get('region', '')}")
+                st.markdown("---")
+
+        # edit the itinerary using the data editor, allowing changes to the 'day' column and displaying a clickable link for Google Maps. The 'place', 'region', 'place_type', 'country', and 'description' columns are disabled to prevent editing, while the 'google_maps_url' column is displayed as a link button that opens the location in Google Maps when clicked. The edited DataFrame is stored in `edited_df` for later saving.
         edited_df = st.data_editor(
             curr_itinerary,
-            # הוספנו את google_maps_url לסדר העמודות
+            # organize columns in a logical order for itinerary editing, with 'day' first for easy sorting, followed by key place information and the Google Maps link at the end for quick access.
             column_order=("day", "place", "country", "region", "place_type", "description", "google_maps_url"),
             column_config={
                 "day": st.column_config.NumberColumn("Day", min_value=1, step=1, required=True),
@@ -487,7 +542,7 @@ if not df.empty:
                 "place_type": st.column_config.TextColumn("Place_Type", disabled=True),
                 "country": st.column_config.TextColumn("Country", disabled=True),
                 "description": st.column_config.TextColumn("Description", width="medium", disabled=True),
-                # הגדרת עמודת הקישור ככפתור לחיץ
+                # the 'google_maps_url' column is configured as a LinkColumn that validates URLs starting with "https://", displays a custom text "📍 Open Map", and is disabled to prevent editing while still allowing users to click the link to open the location in Google Maps.
                 "google_maps_url": st.column_config.LinkColumn(
                     "Maps Link",
                     help="Click to open in Google Maps",
@@ -513,15 +568,14 @@ if not df.empty:
         if st.button("🚀 Generate PDF & KML Map", use_container_width=True):
             with st.spinner("Processing files..."):
                 try:
-                    # --- שלב קריטי: ניקוי הנתונים לפני ייצוא ---
-                    # 1. מסירים שורות שאין בהן שם מקום (שורות ריקות מהעורך)
+                    # clean the itinerary data before exporting to ensure that the PDF and KML files are generated with valid and complete information. This includes removing rows without a place name, ensuring the 'day' column is properly formatted as integers, and filling any remaining NaN values with empty strings to prevent issues in the output files.
                     clean_itinerary = curr_itinerary.dropna(subset=['place']).copy()
 
-                    # 2. מוודאים שעמודת היום היא מספר שלם (int) וממלאים חסרים ב-1
+                    # ensure 'day' is numeric and fill non-numeric or missing values with 1, then convert to integer type for proper sorting and display in the PDF.
                     clean_itinerary['day'] = pd.to_numeric(clean_itinerary['day'], errors='coerce').fillna(1).astype(
                         int)
 
-                    # 3. ניקוי ערכי NaN כלליים בטקסט כדי שלא יופיע "nan" ב-PDF
+                    # clean any remaining NaN values in the itinerary to prevent issues in the PDF and KML generation, ensuring that all fields have valid data (even if it's just an empty string) for consistent output formatting.
                     clean_itinerary = clean_itinerary.fillna("")
 
                     if clean_itinerary.empty:
@@ -529,7 +583,7 @@ if not df.empty:
                         st.stop()
                     # -------------------------------------------
 
-                    # 1. הכנת שמות הקבצים והנתיבים
+                    # make filenames safe and consistent by replacing spaces with underscores and using the current route name as the base for both the PDF and KML filenames. This ensures that the files are easily identifiable and organized in the output folder.
                     route_name = st.session_state.current_route.replace(" ", "_")
                     pdf_filename = f"{route_name}.pdf"
                     kml_filename = f"{route_name}.kml"
@@ -537,21 +591,21 @@ if not df.empty:
                     pdf_path = os.path.join(OUTPUT_FOLDER, pdf_filename)
                     kml_path = os.path.join(OUTPUT_FOLDER, kml_filename)
 
-                    # 2. שימוש במחלקת Integrator עם הנתונים הנקיים
+                    # name of the integrator class that takes the cleaned itinerary data and generates both the Google Maps directions URL and the KML file for mapping. This class is responsible for integrating the itinerary data with Google Maps to create a visual representation of the route and providing a downloadable KML file that can be used in various mapping applications.
                     integrator = GoogleMapsIntegrator(clean_itinerary)
 
-                    # יצירת ה-URL למפות
+                    # maps the itinerary data to a Google Maps directions URL that can be included in the PDF, allowing users to easily access the route on Google Maps directly from their itinerary guide. This URL is generated based on the places and their order in the cleaned itinerary, providing a convenient way for travelers to visualize their trip on a map.
                     full_route_url = integrator.generate_directions_url()
 
-                    # יצירת קובץ ה-KML
+                    # create the kml file
                     integrator.create_kml_file(kml_path)
 
-                    # 3. יצירת ה-PDF עם הנתונים הנקיים
+                    # make the pdf maker instance, passing the cleaned itinerary, customer name, Google Maps URL, and stations data (converted to a DataFrame if available) to generate a comprehensive PDF guide for the trip. The stations data is included in the PDF to provide travelers with important information about key locations such as hospitals and police stations along their route.
                     df_stations = pd.DataFrame(st.session_state.stations).fillna(
                         "") if st.session_state.stations else None
 
                     maker = pdfMaker(
-                        clean_itinerary,  # משתמשים בגרסה הנקייה
+                        clean_itinerary,
                         customer_name=customer_name,
                         route_url=full_route_url,
                         stations_data=df_stations
@@ -560,7 +614,7 @@ if not df.empty:
 
                     st.success(f"✅ Files saved to: `{OUTPUT_FOLDER}/`")
 
-                    # 4. כפתורי הורדה (נשאר ללא שינוי)
+                    # provide download buttons for both the generated PDF and KML files, allowing users to easily download their itinerary guide and map. The buttons are displayed side by side for a convenient user experience, with appropriate icons and file type indications to clearly differentiate between the two types of files.
                     col_pdf, col_kml = st.columns(2)
                     with col_pdf:
                         with open(pdf_path, "rb") as f:
