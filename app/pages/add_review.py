@@ -21,7 +21,11 @@ def load_existing_data():
 
 
 def save_review(review_data):
-    reviews_file = "user_reviews.csv"
+    # Save to NEW_DATA directory instead of root
+    reviews_dir = os.path.join(os.path.dirname(__file__), "../../NEW_DATA")
+    os.makedirs(reviews_dir, exist_ok=True)
+    reviews_file = os.path.join(reviews_dir, "user_reviews.csv")
+    
     df_new = pd.DataFrame([review_data])
     if os.path.exists(reviews_file):
         df_old = pd.read_csv(reviews_file)

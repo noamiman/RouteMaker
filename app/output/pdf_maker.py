@@ -208,24 +208,39 @@ class pdfMaker:
             pdf.set_fill_color(*self.colors['secondary'])
             pdf.rect(10, start_y, 1.5, 75, 'F')
 
-            # place content
-            pdf.set_xy(15, start_y + 8)
-            pdf.set_font("helvetica", 'B', 16)
+            # LINE 1: Title + Place Type Badge (top)
+            pdf.set_xy(15, start_y + 3)
+            pdf.set_font("helvetica", 'B', 12)
             pdf.set_text_color(*self.colors['text_main'])
-            pdf.cell(0, 10, f"{index + 1}. {str(row['place']).upper()}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            place_title = f"{index + 1}. {str(row['place']).upper()}"
+            if len(place_title) > 40:
+                place_title = place_title[:37] + "..."
+            pdf.cell(80, 5, place_title)
 
-            pdf.set_x(15)
-            pdf.set_font("helvetica", 'B', 10)
+            # Place Type Badge (right, same line - no overlap)
+            if pd.notna(row.get('place_type')) and str(row.get('place_type')).strip():
+                pdf.set_xy(127, start_y + 3)
+                pdf.set_fill_color(*self.colors['primary'])
+                pdf.set_text_color(255, 255, 255)
+                pdf.set_font("helvetica", 'B', 7)
+                place_type_text = str(row.get('place_type')).upper()[:13]
+                pdf.cell(68, 5, place_type_text, fill=True, align='C')
+
+            # LINE 2: Location (Country + Region)
+            pdf.set_xy(15, start_y + 9)
+            pdf.set_font("helvetica", '', 8)
             pdf.set_text_color(*self.colors['secondary'])
-            pdf.cell(0, 5, f" {row['country']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            location_text = f"{row['country']}"
+            if pd.notna(row.get('region')) and str(row.get('region')).strip():
+                location_text += f", {row.get('region')}"
+            pdf.cell(170, 3, location_text)
 
-            pdf.ln(2)
-            pdf.set_x(15)
-            pdf.set_font("helvetica", '', 9)
+            # LINE 3-4: Description
+            pdf.set_xy(15, start_y + 13)
+            pdf.set_font("helvetica", '', 7.5)
             pdf.set_text_color(*self.colors['text_main'])
-            # description might be long, so we use multi_cell to wrap it within the card
-            desc = row.get('description', '')
-            pdf.multi_cell(100, 4.5, str(desc))
+            desc = str(row.get('description', '')).strip()[:90]
+            pdf.multi_cell(100, 2.8, desc)
 
             pdf.set_y(start_y + 65)
             pdf.set_x(15)
@@ -244,6 +259,9 @@ class pdfMaker:
 
         if self.stations_df is not None and not self.stations_df.empty:
             self._add_stations_page(pdf)
+
+        # Add summary page at the end
+        self._add_summary_page(pdf)
 
         pdf.output(output_filename)
         if qr_file and os.path.exists(qr_file):
@@ -288,6 +306,126 @@ class pdfMaker:
             pdf.set_font("helvetica", 'B', 8);
             pdf.cell(45, 10, "NAVIGATE >", align='C', fill=True, link=row.get('google maps link', '#'))
             pdf.set_y(curr_y + 40)
+
+    def _add_summary_page(self, pdf):
+        """Add a clean, well-organized summary page with clear visual separation."""
+        pdf.add_page()
+        
+        # Header
+        pdf.set_fill_color(*self.colors['primary'])
+        pdf.rect(0, 0, 210, 18, 'F')
+        pdf.set_y(4)
+        pdf.set_font("helvetica", 'B', 16)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(0, 8, "TRIP SUMMARY", align='C')
+
+        # Calculate stats
+        pdf.set_y(22)
+        try:
+            total_places = len(self.df)
+            total_days = int(pd.to_numeric(self.df['day'], errors='coerce').max()) if 'day' in self.df.columns else 1
+            countries = int(self.df['country'].nunique()) if 'country' in self.df.columns else 1
+        except:
+            total_places = total_days = countries = 0
+
+        # Three metric boxes
+        metrics = [("PLACES", str(total_places)), ("DAYS", str(total_days)), ("COUNTRIES", str(countries))]
+        for i, (label, value) in enumerate(metrics):
+            x = 20 + (i * 58)
+            pdf.set_xy(x, 22)
+            pdf.set_fill_color(*self.colors['secondary'])
+            pdf.rect(x, 22, 53, 13, 'F')
+            
+            pdf.set_font("helvetica", 'B', 14)
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_xy(x + 3, 24)
+            pdf.cell(47, 4, value, align='C')
+            
+            pdf.set_font("helvetica", 'B', 8)
+            pdf.set_xy(x + 3, 29)
+            pdf.cell(47, 3, label, align='C')
+
+        # Divider line
+        pdf.set_draw_color(*self.colors['secondary'])
+        pdf.set_line_width(0.8)
+        pdf.line(15, 40, 195, 40)
+
+        # Left Column: Place Types
+        pdf.set_y(45)
+        pdf.set_font("helvetica", 'B', 10)
+        pdf.set_text_color(*self.colors['primary'])
+        pdf.set_x(15)
+        pdf.cell(0, 5, "PLACE TYPES")
+        
+        if 'place_type' in self.df.columns:
+            type_counts = self.df['place_type'].value_counts()
+            pdf.set_font("helvetica", '', 8.5)
+            pdf.set_text_color(*self.colors['text_main'])
+            pdf.set_y(51)
+            
+            for place_type, count in type_counts.items():
+                pdf.set_x(17)
+                pdf.cell(0, 4, f"{str(place_type).capitalize()}: {count}")
+                pdf.ln(4)
+
+        # Right Column: Countries
+        pdf.set_y(45)
+        pdf.set_font("helvetica", 'B', 10)
+        pdf.set_text_color(*self.colors['primary'])
+        pdf.set_x(112)
+        pdf.cell(0, 5, "COUNTRIES")
+        
+        if 'country' in self.df.columns:
+            country_counts = self.df['country'].value_counts()
+            pdf.set_font("helvetica", '', 8.5)
+            pdf.set_text_color(*self.colors['text_main'])
+            pdf.set_y(51)
+            
+            for country, count in country_counts.items():
+                pdf.set_x(112)
+                pdf.cell(0, 4, f"{str(country)}: {count}")
+                pdf.ln(4)
+
+        # Divider line
+        pdf.set_y(105)
+        pdf.set_draw_color(*self.colors['secondary'])
+        pdf.set_line_width(0.8)
+        pdf.line(15, pdf.get_y(), 195, pdf.get_y())
+
+        # Rating Categories Section
+        pdf.set_y(110)
+        pdf.set_font("helvetica", 'B', 10)
+        pdf.set_text_color(*self.colors['primary'])
+        pdf.set_x(15)
+        pdf.cell(0, 5, "RATING CATEGORIES (1-10 SCALE)")
+        
+        pdf.set_y(116)
+        pdf.set_font("helvetica", '', 8)
+        pdf.set_text_color(*self.colors['text_main'])
+        
+        categories = [
+            ("1. Romance", "Love & Atmosphere"),
+            ("2. Family", "Child-Friendly"),
+            ("3. Cost", "Price Level"),
+            ("4. Nature", "Natural Beauty"),
+            ("5. Adventure", "Thrills & Activity"),
+            ("6. Culture", "History & Heritage"),
+            ("7. Food", "Dining Experience"),
+            ("8. Relaxation", "Peaceful Vibes"),
+            ("9. Service", "Quality of Service"),
+            ("10. Accessibility", "Easy Access")
+        ]
+        
+        for i, (cat_name, cat_desc) in enumerate(categories):
+            col = i % 2
+            y_offset = (i // 2) * 4
+            x = 17 if col == 0 else 112
+            
+            pdf.set_xy(x, 116 + y_offset)
+            pdf.set_font("helvetica", 'B', 7.5)
+            pdf.cell(20, 4, cat_name)
+            pdf.set_font("helvetica", '', 7.5)
+            pdf.cell(0, 4, f"({cat_desc})")
 
 
 # --- example ---

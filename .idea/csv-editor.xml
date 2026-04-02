@@ -3,35 +3,14 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="/DataProcess/Unified_Countries/Japan_processed.csv">
+        <entry key="/ScrapedData/Bucketlistly/Albania/2_Weeks_In_Albania_A_Complete_.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/DataProcess/Unified_Countries/Thailand_processed.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/DataProcess/Unified_Countries/Thailand_processed_enriched.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/DataProcess/Unified_Countries/Vietnam_processed.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/DataProcess/Unified_Countries/Vietnam_processed_enriched.csv">
+        <entry key="/ScrapedData/Bucketlistly/Albania/Discover_Berat_8_Awesome_Thing.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -39,6 +18,13 @@
           </value>
         </entry>
         <entry key="/ScrapedData/Bucketlistly/China/2_Days_Itinerary_for_Jiuzhaigo.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ScrapedData/Bucketlistly/China/3_Days_in_Zhangjiajie_A_Comple.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -80,6 +66,27 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/ScrapedData/Bucketlistly/Japan/13_Japan_Travel_Tips_I_Wish_I_.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ScrapedData/Bucketlistly/Japan/A_Day_On_Mt_Fuji_and_Kawaguchi.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ScrapedData/Bucketlistly/Japan/Explore_Nikko_10_Cultural_and_.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/ScrapedData/Bucketlistly/Japan/Hiroshima_Highlights_Top_13_Mu.csv">
           <value>
             <Attribute>
@@ -95,6 +102,13 @@
           </value>
         </entry>
         <entry key="/ScrapedData/Bucketlistly/Japan/Two_Weeks_In_Japan_A_Backpacke.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ScrapedData/Bucketlistly/Nepal/15_Days_Itinerary_For_Everest_.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -206,6 +220,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/ScrapedData/Bucketlistly/Vietnam/Discover_Ninh_Binh_Top_8_Exper.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/ScrapedData/Bucketlistly/Vietnam/Explore_Vietnam_In_2_Weeks_The.csv">
           <value>
             <Attribute>
@@ -227,70 +248,126 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/ScrapedData/BudgetTraveller/Europe/6_of_the_Weirdest_Dishes_Ive_E.csv">
+        <entry key="/ScrapedData/The_Blonde_Abroad/travel_data_Cambodia.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ScrapedData/BudgetTraveller/Europe/9_things_to_do_in_Dortmund.csv">
+        <entry key="/ScrapedData/The_Blonde_Abroad/travel_data_Indonesia.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ScrapedData/BudgetTraveller/Europe/Berlin_Outdoors_48_hours_off_t.csv">
+        <entry key="/ScrapedData/The_Blonde_Abroad/travel_data_Singapore.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ScrapedData/BudgetTraveller/Europe/Best_things_to_do_in_Bochum__w.csv">
+        <entry key="/ScrapedData/The_World_Travel_Guy/travel_data_Cambodia.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ScrapedData/BudgetTraveller/Europe/Best_things_to_do_in_Görlitz_W.csv">
+        <entry key="/ScrapedData/The_World_Travel_Guy/travel_data_Japan.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ScrapedData/BudgetTraveller/Europe/The_wine_wonderland_of_Germany.csv">
+        <entry key="/ScrapedData/The_World_Travel_Guy/travel_data_Laos.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ScrapedData/BudgetTraveller/Europe/Things_to_do_in_Bruges.csv">
+        <entry key="/finalData/Albania_processed.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ScrapedData/BudgetTraveller/Europe/Where_to_eat_in_Gozo_on_a_budg.csv">
+        <entry key="/finalData/Cambodia_processed.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/Unified_Countries/Thailand_unified.csv">
+        <entry key="/finalData/China_processed.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/Unified_Countries/Thailand_unified_enriched.csv">
+        <entry key="/finalData/Egypt_processed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/finalData/France_processed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/finalData/Indonesia_processed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/finalData/Italy_processed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/finalData/Nepal_processed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/finalData/Taiwan_processed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/finalData/Thailand_processed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/scrappers/travel_data_Cambodia.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/user_reviews.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

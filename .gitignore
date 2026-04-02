@@ -3,38 +3,67 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
-.env
 .venv
 env/
 .idea
+*.egg-info/
+.installed.cfg
+*.egg
 
 # --- Jupyter Notebooks ---
 .ipynb_checkpoints
 
-# --- Models & Weights ---
+# --- Models & Weights (Exclude all model files except configs) ---
 checkpoint-*/
 *.bin
 *.pt
 *.pth
 *.onnx
+*.safetensors
 model/chk.py
 model/tourism_model_refined
 model/tourism_model
 model/tourism_model_checkpoint_1625
+model/checkpoints/*/model.safetensors
+model/checkpoints/*/optimizer.pt
+model/checkpoints/*/rng_state.pth
+model/checkpoints/*/scaler.pt
+model/checkpoints/*/scheduler.pt
+model/data/
+
+# Keep model configs only
+!model/checkpoints/*/config.json
+!model/checkpoints/*/trainer_state.json
 
 .env
 
+# --- Data & Scraped Content (Exclude CSVs except examples) ---
+DataProcess/Unified_Countries/*.csv
+ScrapedData/
+*.csv
+
+# Keep example CSV files
+!NEW_DATA/TEMPLATE.csv
+!finalData/Unified_Countries/Thailand_processed.csv
+!ScrapedData/The_Blonde_Abroad/travel_data_Cambodia.csv
+!ScrapedData/The_Blonde_Abroad/travel_data_Indonesia.csv
+!ScrapedData/The_Blonde_Abroad/travel_data_Singapore.csv
+!ScrapedData/The_Blonde_Abroad/travel_data_Thailand.csv
+!ScrapedData/The_World_Travel_Guy/travel_data_Thailand.csv
+!ScrapedData/The_World_Travel_Guy/travel_data_Vietnam.csv
+!scrappers/travel_data_Cambodia.csv
+
+# --- JSON files (keep data files but exclude large ones) ---
 !for_full_fineTune.json
 !reviews_with_rates_10k.json
 !travel_edge_reviews_1500.json
 
-# --- Data & Scraped Content ---
+# --- Output files ---
+*.pdf
+*.kml
+temp_qr_code.png
+Noam_Itinerary_Map.kml
 
-DataProcess/Unified_Countries/*.csv
-ScrapedData/
-*.csv
-*.json
-!finalData/Unified_Countries/Thailand_processed.csv
 # --- Streamlit ---
 .streamlit/
 static/

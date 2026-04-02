@@ -2,6 +2,9 @@ import pandas as pd
 import ollama
 import os
 from tqdm import tqdm
+import argparse
+from datetime import datetime
+
 
 class TravelSummarizer:
     def __init__(self, model_name='qwen2.5:0.5b', num_descriptions=3):
@@ -20,7 +23,6 @@ class TravelSummarizer:
 
         combined_text = "\n".join([f"- {desc}" for desc in valid_descriptions])
 
-        # todo: fix the prompt to be more clear and concise, and to instruct the model to write in a first-person tone without any intro text, and to limit the summary to 3 sentences.
         prompt = f""""You are a strict data extractor. Summarize the text in 2-3 concise sentences "
                 f"focusing ONLY on: {combined_text}. "
                 "CRITICAL: Output ONLY the summary text. Do not list the topics. Do not include headers. "
@@ -36,51 +38,71 @@ class TravelSummarizer:
         except Exception as e:
             return f"Error: {e}"
 
-    def process_file(self, input_path, output_path=None):
+    def process_file(self, input_path, output_path=None, overwrite=False):
         """processes a single CSV file, aggregates descriptions by place,
          summarizes them using the specified model,
-          and saves the results to a new CSV file."""
+          and saves the results (overwrites if specified)."""
         print(f"\n--- Processing: {input_path} ---")
         df = pd.read_csv(input_path)
 
-        # configure the aggregation rules for each column: take the first value for country and google_maps_url, combine descriptions into a list of unique values (up to num_descriptions), and average the numeric scores
+        # define columns to check and aggregate
+        cols_to_avg = ['romance', 'family', 'cost', 'nature', 'adventure',
+                       'culture', 'food', 'relaxation', 'service', 'accessibility']
+
         agg_rules = {
             'country': 'first',
             'google_maps_url': 'first',
-            # 'description': lambda x: list(set(x))[:self.num_descriptions],
-            'description': 'first',
-            'romance': 'mean', 'family': 'mean', 'cost': 'mean',
-            'nature': 'mean', 'adventure': 'mean', 'culture': 'mean',
-            'food': 'mean', 'relaxation': 'mean', 'service': 'mean',
-            'accessibility': 'mean'
+            'description': lambda x: "\n\n".join(list(dict.fromkeys([str(d).strip() for d in x if pd.notna(d) and str(d).strip() != ""]))[:3])  # you can change to lambda if LLM is enabled
         }
 
-        # aggregate by place and apply the defined rules to combine descriptions and average the scores
+        extra_cols = ['region', 'place_type', 'blog_source']
+        for col in extra_cols:
+            if col in df.columns:
+                agg_rules[col] = 'first'
+
+        # only add numeric columns that actually exist in the file
+        for col in cols_to_avg:
+            if col in df.columns:
+                agg_rules[col] = 'mean'
+
+        # aggregate by place
         df_grouped = df.groupby('place', as_index=False).agg(agg_rules)
+        
+        # Add description_count (number of descriptions per place)
+        df_grouped['description_count'] = df.groupby('place').size().reset_index(name='description_count')['description_count'].values
+        
+        # Add last_updated timestamp
+        df_grouped['last_updated'] = datetime.now().strftime('%Y-%m-%d')
 
-        # the cost in the majority of the cases is underestimated, so we will multiply it by 2 to make it more realistic (this is just a heuristic and can be adjusted based on the actual data distribution)
-        df_grouped['cost'] = df_grouped['cost'] * 2
+        actual_numeric_cols = [col for col in cols_to_avg if col in df_grouped.columns]
+        df_grouped[actual_numeric_cols] = df_grouped[actual_numeric_cols].fillna(0)
+        # heuristic cost adjustment
+        if 'cost' in df_grouped.columns:
+            df_grouped['cost'] = df_grouped['cost'] * 2
 
-        # summarize the combined descriptions for each place using the specified model
-        # print(f"Summarizing using {self.model_name}...")
-        # df_grouped['description'] = df_grouped['description'].progress_apply(self._summarize_text)
+        df_grouped[actual_numeric_cols] = df_grouped[actual_numeric_cols].round(0).astype(int)
+        all_text_cols = ['description', 'country', 'google_maps_url'] + extra_cols
+        for col in all_text_cols:
+            if col in df_grouped.columns:
+                # הופך NaN למחרוזת ריקה באמת
+                df_grouped[col] = df_grouped[col].fillna("")
 
-        print("Using the first available description (skipping LLM)...")
+        print("Using the first 3 available descriptions (skipping LLM)...")
 
-        # clean up the numeric columns by rounding to the nearest integer for better presentation
-        numeric_cols = df_grouped.select_dtypes(include=['number']).columns
-        df_grouped[numeric_cols] = df_grouped[numeric_cols].round(0).astype(int)
+        # logic for output path or overwrite
+        if overwrite:
+            final_path = input_path
+        elif output_path:
+            final_path = output_path
+        else:
+            final_path = input_path.replace(".csv", "_summarized.csv")
 
-        # save the final summarized and aggregated results to a new CSV file
-        if not output_path:
-            output_path = input_path.replace(".csv", "_summarized.csv")
+        df_grouped.to_csv(final_path, index=False, encoding='utf-8-sig')
+        print(f"Saved to: {final_path}")
 
-        df_grouped.to_csv(output_path, index=False)
-        print(f"Saved to: {output_path}")
-
-    def process_folder(self, folder_path, output_folder):
-        """processes all CSV files in a folder and saves the summarized results to another folder"""
-        if not os.path.exists(output_folder):
+    def process_folder(self, folder_path, output_folder, overwrite=False):
+        """processes all CSV files in a folder. If overwrite is True, ignores output_folder."""
+        if not overwrite and not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
         files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
@@ -88,19 +110,27 @@ class TravelSummarizer:
 
         for file in files:
             input_path = os.path.join(folder_path, file)
-            output_path = os.path.join(output_folder, f"summarized_{file}")
-            self.process_file(input_path, output_path)
+
+            if overwrite:
+                self.process_file(input_path, overwrite=True)
+            else:
+                output_path = os.path.join(output_folder, f"summarized_{file}")
+                self.process_file(input_path, output_path)
 
 
 # --- using ---
 if __name__ == "__main__":
-    # create an instance of the summarizer with the desired model
-     summarizer = TravelSummarizer(model_name='qwen2.5:0.5b')
-     summarizer.process_file('../finalData/Unified_Countries/Albania_processed.csv', '../finalData/Unified_Countries/Albania_processed_sum.csv')
-    # option A: process a single file
-    # summarizer.process_file("../scrappers/travel_data_Taiwan.csv", "Taiwan_final.csv")
+    parser = argparse.ArgumentParser(description="Create final summarized travel data")
+    parser.add_argument("--input", "-i", default="../finalData",
+                       help="Input directory containing processed CSV files")
+    parser.add_argument("--output", "-o", default="../finalData",
+                       help="Output directory for summarized files")
+    parser.add_argument("--overwrite", action="store_true",
+                       help="Overwrite existing files instead of creating new ones")
+    parser.add_argument("--model", "-m", default="qwen2.5:0.5b",
+                       help="Ollama model name for summarization")
 
-    # option B: process all CSV files in a folder and save the summarized results to another folder
-    # summarizer.process_folder("Unified_Countries", "Summarized_Results")
+    args = parser.parse_args()
 
-    # print("summarize: ", summarizer._summarize_text("This traditional teahouse with its rows of windows and paper lanterns is the most famous view in Jiufen. If you plan to have tea there, you’ll want to book ahead online."))
+    summarizer = TravelSummarizer(model_name=args.model)
+    summarizer.process_folder(args.input, args.output, overwrite=args.overwrite)

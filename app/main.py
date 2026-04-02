@@ -431,6 +431,12 @@ if not df.empty:
 
                         st.write(row['description'])
 
+                        # Show description source metadata
+                        desc_count = row.get('description_count', 1)
+                        if pd.notna(desc_count) and desc_count > 0:
+                            desc_count = int(desc_count)
+                            st.caption(f"📊 Based on {desc_count} description{'s' if desc_count != 1 else ''}")
+
                         if is_searching:
                             ratings = [f"**{c.capitalize()}:** {row[c]}" for c in categories_list if row[c] > 0]
                             st.markdown(f"⭐ {' • '.join(ratings)}")
@@ -472,7 +478,7 @@ if not df.empty:
     if not curr_itinerary.empty:
         # Trip Overview Statistics
         with st.container():
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2, col3, col4, col5 = st.columns(5)
             with col1:
                 st.metric("📅 Total Days", int(curr_itinerary['day'].max()))
             with col2:
@@ -484,6 +490,10 @@ if not df.empty:
                 if 'place_type' in curr_itinerary.columns:
                     types_count = curr_itinerary['place_type'].nunique()
                     st.metric("🏘️ Types", types_count)
+            with col5:
+                if 'description_count' in curr_itinerary.columns:
+                    avg_desc = curr_itinerary['description_count'].mean()
+                    st.metric("📊 Avg Sources", f"{avg_desc:.1f}")
         st.divider()
         
         col_info, col_clear = st.columns([4, 1])

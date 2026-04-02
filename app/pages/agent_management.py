@@ -5,14 +5,16 @@ import pandas as pd
 import sys
 import time
 
-# --- 1. תיקון נתיבי ייבוא ---
+# --- 1. תיקון נתיבי ייבוא ומבנה פרויקט ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, "../../"))
+SCRAPED_DATA_ROOT = os.path.join(project_root, "ScrapedData")
+
 if project_root not in sys.path:
     sys.path.append(project_root)
 
 try:
-    from scrappers.chkAgent import LLMManager, find_relevant_posts, extract_data_from_post
+    from scrappers.agent import LLMManager, find_relevant_posts, extract_data_from_post
 except ImportError:
     st.error("Module 'scrappers' not found. Check folder structure.")
     st.stop()
@@ -27,10 +29,8 @@ if 'found_urls' not in st.session_state:
 if 'current_extracted_data' not in st.session_state:
     st.session_state.current_extracted_data = []
 
-# --- 3. הגדרות נתיבים ---
+# --- 3. הגדרות נתיבים לקבצים ---
 CONFIG_PATH = os.path.join(project_root, "blogs.json")
-OUTPUT_FOLDER = os.path.join(project_root, "scrappers")
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 
 def load_blogs():
@@ -51,7 +51,6 @@ def save_blogs(data):
 # --- 4. ממשק המשתמש (UI) ---
 st.set_page_config(page_title="Agent Management", page_icon="🤖", layout="wide")
 
-# CSS קטן לשיפור הנראות של הכפתורים
 st.markdown("""
     <style>
     .stButton>button[kind="primary"] { background-color: #ff4b4b; border-color: #ff4b4b; }
@@ -66,8 +65,6 @@ blogs_config = load_blogs()
 # --- 5. Sidebar: ניהול מקורות והגדרות ---
 with st.sidebar:
     st.header("⚙️ Control Center")
-
-    # כפתור כיבוי מערכת - STOP
     if st.session_state.is_running:
         if st.button("🛑 STOP SYSTEM", type="primary", use_container_width=True, key="stop_btn"):
             st.session_state.is_running = False
@@ -77,7 +74,6 @@ with st.sidebar:
             st.rerun()
 
     st.divider()
-
     st.session_state.use_local = st.toggle("Force Ollama (Local Mode)", value=st.session_state.use_local,
                                            key="model_toggle")
 
@@ -87,15 +83,11 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
-
-    # הוספה/מחיקה של בלוג
     with st.expander("📝 Manage Blogs"):
         new_b = st.text_input("New Blog Name", key="add_blog_name_input")
         new_u = st.text_input("Base URL", key="add_blog_url_input")
-
         if st.button("Add Blog", key="add_blog_btn"):
             if new_b and new_u:
-                # בדיקה אם הבלוג קיים
                 blog_exists = any(b['blog_name'].lower() == new_b.lower() for b in blogs_config)
                 if blog_exists:
                     st.error(f"🚫 Blog '{new_b}' already exists.")
@@ -106,63 +98,27 @@ with st.sidebar:
                     time.sleep(1)
                     st.rerun()
 
-        st.write("---")
-        if blogs_config:
-            b_del = st.selectbox("Delete Blog", [b['blog_name'] for b in blogs_config], key="selectbox_del_blog")
-            if st.button("🗑️ Delete Selected Blog", type="secondary", key="del_blog_btn"):
-                blogs_config = [b for b in blogs_config if b['blog_name'] != b_del]
-                save_blogs(blogs_config)
-                st.success(f"🗑️ Deleted {b_del}")
-                time.sleep(1)
-                st.rerun()
-
-    # הוספה/מחיקה של יעד
     with st.expander("📍 Manage Destinations"):
         if blogs_config:
-            b_target = st.selectbox("Select Blog for Dest", [b['blog_name'] for b in blogs_config],
-                                    key="selectbox_target_blog_dest")
-            d_country = st.text_input("Country", key="add_dest_country_input")
-            d_url = st.text_input("Guide URL", key="add_dest_url_input")
-
-            if st.button("Add Destination", key="add_dest_btn"):
+            b_target = st.selectbox("Select Blog for Dest", [b['blog_name'] for b in blogs_config])
+            d_country = st.text_input("Country")
+            d_url = st.text_input("Guide URL")
+            if st.button("Add Destination"):
                 if d_country and d_url:
-                    # מציאת הבלוג
                     target_blog = next(b for b in blogs_config if b['blog_name'] == b_target)
-                    # בדיקת כפילות יעד
-                    dest_exists = any(d['country'].lower() == d_country.lower() for d in target_blog['destinations'])
-
-                    if dest_exists:
-                        st.error(f"🚫 Destination '{d_country}' already exists in {b_target}.")
+                    if any(d['country'].lower() == d_country.lower() for d in target_blog['destinations']):
+                        st.error("🚫 Destination already exists.")
                     else:
-                        for b in blogs_config:
-                            if b['blog_name'] == b_target:
-                                b['destinations'].append({"country": d_country, "category_url": d_url})
-                                break
+                        target_blog['destinations'].append({"country": d_country, "category_url": d_url})
                         save_blogs(blogs_config)
-                        st.success(f"✅ Added {d_country} to {b_target}")
+                        st.success(f"✅ Added {d_country}")
                         time.sleep(1)
                         st.rerun()
-
-            st.write("---")
-            curr_b = next(b for b in blogs_config if b['blog_name'] == b_target)
-            if curr_b['destinations']:
-                # כאן הוספנו KEY ייחודי כדי לפתור את השגיאה שקיבלת
-                d_del = st.selectbox("Delete Dest", [d['country'] for d in curr_b['destinations']],
-                                     key="selectbox_del_dest_key")
-                if st.button("🗑️ Delete Dest", key="del_dest_btn"):
-                    for b in blogs_config:
-                        if b['blog_name'] == b_target:
-                            b['destinations'] = [d for d in b['destinations'] if d['country'] != d_del]
-                    save_blogs(blogs_config)
-                    st.success(f"🗑️ Removed {d_del}")
-                    time.sleep(1)
-                    st.rerun()
         else:
             st.info("Add a blog source first.")
 
 # --- 6. בחירה והרצה ---
 col_ctrl, col_log = st.columns([1, 2])
-
 with col_ctrl:
     st.subheader("🚀 Run Scraper")
     blog_names = ["All"] + [b['blog_name'] for b in blogs_config]
@@ -179,7 +135,7 @@ with col_ctrl:
         st.session_state.current_extracted_data = []
         st.rerun()
 
-# --- 7. לוגיקת הסריקה ---
+# --- 7. לוגיקת הסריקה (החלק המעודכן) ---
 if st.session_state.is_running:
     llm_service = LLMManager(use_local=st.session_state.use_local)
     tasks = []
@@ -198,11 +154,32 @@ if st.session_state.is_running:
 
         for i, (b_name, dest) in enumerate(tasks):
             task_key = f"{b_name}_{dest['country']}"
+
+            # 1. הכנת נתיבי השמירה מראש
+            blog_folder_name = b_name.replace(" ", "_")
+            target_dir = os.path.join(SCRAPED_DATA_ROOT, blog_folder_name)
+            os.makedirs(target_dir, exist_ok=True)
+
+            clean_country = dest['country'].replace(" ", "_")
+            full_path = os.path.join(target_dir, f"travel_data_{clean_country}.csv")
+
+            # 2. טעינת נתונים קיימים למניעת כפילויות
+            existing_urls = set()
+            if os.path.exists(full_path):
+                try:
+                    existing_df = pd.read_csv(full_path)
+                    if 'source_url' in existing_df.columns:
+                        existing_urls = set(existing_df['source_url'].unique())
+                        # טוענים את הנתונים הקיימים ל-session_state כדי שהקובץ החדש יכלול גם אותם
+                        st.session_state.current_extracted_data = existing_df.to_dict('records')
+                except Exception as e:
+                    st.error(f"Error loading existing CSV: {e}")
+
             with col_log:
                 st.markdown(f"### 🌍 Processing: {dest['country']}")
 
+                # מציאת פוסטים
                 try:
-                    # מציאת פוסטים
                     if task_key not in st.session_state.found_urls:
                         with st.spinner("Finding articles..."):
                             urls = find_relevant_posts(llm_service, dest['category_url'], dest['country'])
@@ -211,9 +188,14 @@ if st.session_state.is_running:
                         urls = st.session_state.found_urls[task_key]
 
                     for url_idx, url in enumerate(urls):
+                        # בדיקה אם ה-URL כבר נסרק
+                        if url in existing_urls:
+                            st.info(f"⏭️ Skipping (Already Scanned): {url}")
+                            continue
+
                         st.write(f"📄 ({url_idx + 1}/{len(urls)}) Scraping: {url}")
                         try:
-                            with st.spinner("AI Analysis in progress..."):
+                            with st.spinner("AI Analysis..."):
                                 data = extract_data_from_post(llm_service, url, dest['country'])
 
                             if data and data.places:
@@ -223,42 +205,29 @@ if st.session_state.is_running:
                                     row['blog_source'] = b_name
                                     st.session_state.current_extracted_data.append(row)
 
-                                # עדכון תצוגה
+                                # --- שמירה מיידית אחרי כל פוסט ---
+                                df_to_save = pd.DataFrame(st.session_state.current_extracted_data)
+                                df_to_save.to_csv(full_path, index=False, encoding='utf-8-sig')
+
                                 with preview_table.container():
-                                    st.write("📊 **Live Preview (Last 5):**")
-                                    st.dataframe(pd.DataFrame(st.session_state.current_extracted_data).tail(5),
-                                                 use_container_width=True)
+                                    st.write(f"📊 **Live Preview ({dest['country']}):**")
+                                    st.dataframe(df_to_save.tail(5), use_container_width=True)
 
                         except Exception as e:
-                            # תפיסה מדויקת של שגיאת המכסה
-                            if "GROQ_LIMIT_REACHED" in str(e) or "429" in str(e):
-                                st.error("🚨 Groq Limit Reached!")
-                                if st.button("🔄 Switch to Ollama and Continue", type="primary", key=f"fall_{url_idx}"):
+                            if "429" in str(e) or "limit" in str(e).lower():
+                                st.error("🚨 Groq Limit reached! Data up to this point is safe.")
+                                if st.button("🔄 Switch to Ollama", type="primary"):
                                     st.session_state.use_local = True
                                     st.rerun()
                                 st.stop()
                             else:
                                 st.error(f"Error at {url}: {e}")
 
-                    # שמירה
-                    if st.session_state.current_extracted_data:
-                        df_res = pd.DataFrame(st.session_state.current_extracted_data)
-                        csv_name = f"travel_data_{dest['country'].replace(' ', '_')}.csv"
-                        df_res.to_csv(os.path.join(OUTPUT_FOLDER, csv_name), index=False, encoding='utf-8-sig')
-                        st.success(f"✅ Saved {dest['country']}!")
-                        st.session_state.current_extracted_data = []
-
                 except Exception as e:
-                    # אם זה קרה בשלב החיפוש
-                    if "GROQ_LIMIT_REACHED" in str(e) or "429" in str(e):
-                        st.error("🚨 Groq Limit Reached during search!")
-                        if st.button("🔄 Switch to Ollama to Find Posts", type="primary", key="search_fall"):
-                            st.session_state.use_local = True
-                            st.rerun()
-                        st.stop()
-                    else:
-                        st.error(f"Critical error: {e}")
+                    st.error(f"Critical error in search: {e}")
 
+            # איפוס לקראת המדינה הבאה במחזור ה-tasks
+            st.session_state.current_extracted_data = []
             progress.progress((i + 1) / len(tasks))
 
         st.session_state.is_running = False

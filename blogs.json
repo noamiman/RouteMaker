@@ -1,0 +1,428 @@
+[
+  {
+    "blog_name": "The Blonde Abroad",
+    "base_url": "https://theblondeabroad.com/",
+    "destinations": [
+      {
+        "country": "Singapore",
+        "category_url": "https://theblondeabroad.com/ultimate-singapore-travel-guide/"
+      },
+      {
+        "country": "Thailand",
+        "category_url": "https://theblondeabroad.com/ultimate-thailand-travel-guide/"
+      },
+      {
+        "country": "Vietnam",
+        "category_url": "https://theblondeabroad.com/ultimate-vietnam-travel-guide/"
+      },
+      {
+        "country": "Indonesia",
+        "category_url": "https://theblondeabroad.com/ultimate-bali-travel-guide/"
+      },
+      {
+        "country": "Philippines",
+        "category_url": "https://theblondeabroad.com/ultimate-philippines-travel-guide/"
+      },
+      {
+        "country": "Japan",
+        "category_url": "https://theblondeabroad.com/ultimate-japan-travel-guide/"
+      },
+      {
+        "country": "Malaysia",
+        "category_url": "https://theblondeabroad.com/ultimate-malaysia-travel-guide/"
+      },
+      {
+        "country": "Cambodia",
+        "category_url": "https://theblondeabroad.com/ultimate-cambodia-travel-guide/"
+      },
+      {
+        "country": "Italy",
+        "category_url": "https://theblondeabroad.com/ultimate-italy-travel-guide/"
+      },
+      {
+        "country": "Switzerland",
+        "category_url": "https://theblondeabroad.com/ultimate-switzerland-travel-guide/"
+      },
+      {
+        "country": "Norway",
+        "category_url": "https://theblondeabroad.com/ultimate-norway-travel-guide/"
+      },
+      {
+        "country": "Greece",
+        "category_url": "https://theblondeabroad.com/ultimate-greece-travel-guide/"
+      },
+      {
+        "country": "Iceland",
+        "category_url": "https://theblondeabroad.com/ultimate-iceland-travel-guide/"
+      },
+      {
+        "country": "Germany",
+        "category_url": "https://theblondeabroad.com/ultimate-germany-travel-guide/"
+      },
+      {
+        "country": "Portugal",
+        "category_url": "https://theblondeabroad.com/ultimate-portugal-travel-guide/"
+      },
+      {
+        "country": "Spain",
+        "category_url": "https://theblondeabroad.com/ultimate-spain-travel-guide/"
+      },
+      {
+        "country": "France",
+        "category_url": "https://theblondeabroad.com/ultimate-france-travel-guide/"
+      },
+      {
+        "country": "Georgia",
+        "category_url": "https://theblondeabroad.com/ultimate-georgia-travel-guide/"
+      },
+      {
+        "country": "Croatia",
+        "category_url": "https://www.theblondeabroad.com/ultimate-croatia-travel-guide/"
+      }
+    ]
+  },
+  {
+    "blog_name": "The World Travel Guy",
+    "base_url": "https://theworldtravelguy.com/",
+    "destinations": [
+      {
+        "country": "Thailand",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/thailand/"
+      },
+      {
+        "country": "Vietnam",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/vietnam/"
+      },
+      {
+        "country": "Indonesia",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/indonesia/"
+      },
+      {
+        "country": "Philippines",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/philippines/"
+      },
+      {
+        "country": "Japan",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/japan/"
+      },
+      {
+        "country": "Malaysia",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/malaysia/"
+      },
+      {
+        "country": "Cambodia",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/cambodia/"
+      },
+      {
+        "country": "South Korea",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/south-korea/"
+      },
+      {
+        "country": "Singapore",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/singapore/"
+      },
+      {
+        "country": "Laos",
+        "category_url": "https://theworldtravelguy.com/category/destinations/asia/laos/"
+      },
+      {
+        "country": "Italy",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/italy/"
+      },
+      {
+        "country": "Switzerland",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/switzerland/"
+      },
+      {
+        "country": "Norway",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/norway/"
+      },
+      {
+        "country": "Greece",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/greece/"
+      },
+      {
+        "country": "Iceland",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/iceland/"
+      },
+      {
+        "country": "Germany",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/germany/"
+      },
+      {
+        "country": "Portugal",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/portugal/"
+      },
+      {
+        "country": "Spain",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/spain/"
+      },
+      {
+        "country": "France",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/france/"
+      },
+      {
+        "country": "Georgia",
+        "category_url": "https://theworldtravelguy.com/category/destinations/europe/georgia/"
+      }
+    ]
+  },
+  {
+    "blog_name": "Bucketlistly Blog",
+    "base_url": "https://www.bucketlistly.blog/",
+    "destinations": [
+      {
+        "country": "Thailand",
+        "category_url": "https://www.bucketlistly.blog/destinations/thailand"
+      },
+      {
+        "country": "Vietnam",
+        "category_url": "https://www.bucketlistly.blog/destinations/vietnam"
+      },
+      {
+        "country": "Indonesia",
+        "category_url": "https://www.bucketlistly.blog/destinations/indonesia"
+      },
+      {
+        "country": "Philippines",
+        "category_url": "https://www.bucketlistly.blog/destinations/philippines"
+      },
+      {
+        "country": "Japan",
+        "category_url": "https://www.bucketlistly.blog/destinations/japan"
+      },
+      {
+        "country": "Malaysia",
+        "category_url": "https://www.bucketlistly.blog/destinations/malaysia"
+      },
+      {
+        "country": "Cambodia",
+        "category_url": "https://www.bucketlistly.blog/destinations/cambodia"
+      },
+      {
+        "country": "South Korea",
+        "category_url": "https://www.bucketlistly.blog/destinations/south-korea"
+      },
+      {
+        "country": "Singapore",
+        "category_url": "https://www.bucketlistly.blog/destinations/singapore"
+      },
+      {
+        "country": "Laos",
+        "category_url": "https://www.bucketlistly.blog/destinations/laos"
+      },
+      {
+        "country": "Italy",
+        "category_url": "https://www.bucketlistly.blog/destinations/italy"
+      },
+      {
+        "country": "Switzerland",
+        "category_url": "https://www.bucketlistly.blog/destinations/switzerland"
+      },
+      {
+        "country": "Norway",
+        "category_url": "https://www.bucketlistly.blog/destinations/norway"
+      },
+      {
+        "country": "Greece",
+        "category_url": "https://www.bucketlistly.blog/destinations/greece"
+      },
+      {
+        "country": "Iceland",
+        "category_url": "https://www.bucketlistly.blog/destinations/iceland"
+      },
+      {
+        "country": "Germany",
+        "category_url": "https://www.bucketlistly.blog/destinations/germany"
+      },
+      {
+        "country": "Portugal",
+        "category_url": "https://www.bucketlistly.blog/destinations/portugal"
+      },
+      {
+        "country": "Spain",
+        "category_url": "https://www.bucketlistly.blog/destinations/spain"
+      },
+      {
+        "country": "France",
+        "category_url": "https://www.bucketlistly.blog/destinations/france"
+      },
+      {
+        "country": "Georgia",
+        "category_url": "https://www.bucketlistly.blog/destinations/georgia"
+      }
+    ]
+  },
+  {
+    "blog_name": "Adventurous Kate",
+    "base_url": "https://www.adventurouskate.com/",
+    "destinations": [
+      {
+        "country": "Thailand",
+        "category_url": "https://www.adventurouskate.com/thailand/"
+      },
+      {
+        "country": "Vietnam",
+        "category_url": "https://www.adventurouskate.com/vietnam/"
+      },
+      {
+        "country": "Indonesia",
+        "category_url": "https://www.adventurouskate.com/indonesia/"
+      },
+      {
+        "country": "Philippines",
+        "category_url": "https://www.adventurouskate.com/philippines/"
+      },
+      {
+        "country": "Japan",
+        "category_url": "https://www.adventurouskate.com/japan/"
+      },
+      {
+        "country": "Malaysia",
+        "category_url": "https://www.adventurouskate.com/malaysia/"
+      },
+      {
+        "country": "Cambodia",
+        "category_url": "https://www.adventurouskate.com/cambodia/"
+      },
+      {
+        "country": "South Korea",
+        "category_url": "https://www.adventurouskate.com/south-korea/"
+      },
+      {
+        "country": "Singapore",
+        "category_url": "https://www.adventurouskate.com/singapore/"
+      },
+      {
+        "country": "Laos",
+        "category_url": "https://www.adventurouskate.com/laos/"
+      },
+      {
+        "country": "Italy",
+        "category_url": "https://www.adventurouskate.com/italy/"
+      },
+      {
+        "country": "Switzerland",
+        "category_url": "https://www.adventurouskate.com/switzerland/"
+      },
+      {
+        "country": "Norway",
+        "category_url": "https://www.adventurouskate.com/norway/"
+      },
+      {
+        "country": "Greece",
+        "category_url": "https://www.adventurouskate.com/greece/"
+      },
+      {
+        "country": "Iceland",
+        "category_url": "https://www.adventurouskate.com/iceland/"
+      },
+      {
+        "country": "Germany",
+        "category_url": "https://www.adventurouskate.com/germany/"
+      },
+      {
+        "country": "Portugal",
+        "category_url": "https://www.adventurouskate.com/portugal/"
+      },
+      {
+        "country": "Spain",
+        "category_url": "https://www.adventurouskate.com/spain/"
+      },
+      {
+        "country": "France",
+        "category_url": "https://www.adventurouskate.com/france/"
+      },
+      {
+        "country": "Georgia",
+        "category_url": "https://www.adventurouskate.com/georgia/"
+      }
+    ]
+  },
+  {
+    "blog_name": "The Shooting Star",
+    "base_url": "https://the-shooting-star.com/",
+    "destinations": [
+      {
+        "country": "Thailand",
+        "category_url": "https://the-shooting-star.com/category/asia/thailand/"
+      },
+      {
+        "country": "Vietnam",
+        "category_url": "https://the-shooting-star.com/category/asia/vietnam/"
+      },
+      {
+        "country": "Indonesia",
+        "category_url": "https://the-shooting-star.com/category/asia/indonesia/"
+      },
+      {
+        "country": "Philippines",
+        "category_url": "https://the-shooting-star.com/category/asia/philippines/"
+      },
+      {
+        "country": "Japan",
+        "category_url": "https://the-shooting-star.com/category/asia/japan/"
+      },
+      {
+        "country": "Malaysia",
+        "category_url": "https://the-shooting-star.com/category/asia/malaysia/"
+      },
+      {
+        "country": "Cambodia",
+        "category_url": "https://the-shooting-star.com/category/asia/cambodia/"
+      },
+      {
+        "country": "South Korea",
+        "category_url": "https://the-shooting-star.com/category/asia/south-korea/"
+      },
+      {
+        "country": "Singapore",
+        "category_url": "https://the-shooting-star.com/category/asia/singapore/"
+      },
+      {
+        "country": "Laos",
+        "category_url": "https://the-shooting-star.com/category/asia/laos/"
+      },
+      {
+        "country": "Italy",
+        "category_url": "https://the-shooting-star.com/category/europe/italy/"
+      },
+      {
+        "country": "Switzerland",
+        "category_url": "https://the-shooting-star.com/category/europe/switzerland/"
+      },
+      {
+        "country": "Norway",
+        "category_url": "https://the-shooting-star.com/category/europe/norway/"
+      },
+      {
+        "country": "Greece",
+        "category_url": "https://the-shooting-star.com/category/europe/greece/"
+      },
+      {
+        "country": "Iceland",
+        "category_url": "https://the-shooting-star.com/category/europe/iceland/"
+      },
+      {
+        "country": "Germany",
+        "category_url": "https://the-shooting-star.com/category/europe/germany/"
+      },
+      {
+        "country": "Portugal",
+        "category_url": "https://the-shooting-star.com/category/europe/portugal/"
+      },
+      {
+        "country": "Spain",
+        "category_url": "https://the-shooting-star.com/category/europe/spain/"
+      },
+      {
+        "country": "France",
+        "category_url": "https://the-shooting-star.com/category/europe/france/"
+      },
+      {
+        "country": "Georgia",
+        "category_url": "https://the-shooting-star.com/category/europe/georgia/"
+      }
+    ]
+  }
+]
