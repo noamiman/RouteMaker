@@ -10,6 +10,10 @@ env/
 .installed.cfg
 *.egg
 
+# --- Scraper files (exclude) ---
+scrappers/base_scrapper.py
+scrappers/bucketListScrapper.py
+
 # --- Jupyter Notebooks ---
 .ipynb_checkpoints
 
