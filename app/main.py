@@ -107,13 +107,11 @@ def load_all_countries_data():
     """
     base_path = os.path.dirname(__file__)
     # define the path to the folder containing the unified country CSVs, relative to this file
-    # folder_path = os.path.join(base_path, "..", "DataProcess", "Unified_Countries")
     folder_path = os.path.join(base_path, "..", "finalData")
 
     # fallback: if the relative path doesn't work try an absolute path
     if not os.path.exists(folder_path):
         folder_path = "../finalData"
-        # folder_path = "../DataProcess/Unified_Countries"
 
     all_dfs = []
 
