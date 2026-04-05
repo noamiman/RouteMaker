@@ -48,6 +48,7 @@ ScrapedData/
 
 # Keep example CSV files
 !app/finalData/
+!app/finalData/**
 !NEW_DATA/TEMPLATE.csv
 !finalData/Unified_Countries/Thailand_processed.csv
 !ScrapedData/The_Blonde_Abroad/travel_data_Cambodia.csv
