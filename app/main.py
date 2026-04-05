@@ -343,10 +343,14 @@ if not df.empty:
     )
 
     # 3. Filter by Place Type
+    # --- 3. Filter by Place Type ---
     if 'place_type' in df.columns:
-        all_types = sorted(df['place_type'].astype(str).unique().tolist())
+        raw_types = df['place_type'].fillna("General").astype(str).unique().tolist()
+        
+        all_types = sorted([str(t).strip() for t in raw_types if str(t).strip() != ""])
     else:
         all_types = []
+
     selected_types = st.multiselect(
         "🏘️ Filter by Place Type",
         options=all_types,
