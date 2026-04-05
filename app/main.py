@@ -133,6 +133,7 @@ def load_all_countries_data():
 
 # call the function to load all data at once
 df = load_all_countries_data()
+st.write("Columns in DF:", df.columns.tolist() if not df.empty else "Empty DF")
 
 # --- Session State Management (Multi-Route) ---
 if 'all_itineraries' not in st.session_state:
