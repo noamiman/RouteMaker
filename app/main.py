@@ -99,45 +99,35 @@ st.markdown("""
 
 @st.cache_data
 def load_all_countries_data():
-    """
-    load and unify all country CSV files into a single DataFrame. It looks for CSV files in the specified folder,
-     reads them, and concatenates them into one DataFrame.
-      If the folder or files are not found, it returns an empty DataFrame and shows an error message.
-    :return:
-    """
-    base_path = os.path.dirname(__file__)
-    # define the path to the folder containing the unified country CSVs, relative to this file
+    # מוצא את התיקייה שבה נמצא הקובץ הנוכחי (main.py)
+    base_path = os.path.dirname(__file__) 
+    
+    # בונה נתיב לתיקייה finalData שנמצאת באותו מקום
     folder_path = os.path.join(base_path, "finalData")
 
-    # fallback: if the relative path doesn't work try an absolute path
-    if not os.path.exists(folder_path):
-        folder_path = "finalData"
+    # הדפסה לדיבאג (תראה אותה ב-Logs של Streamlit)
+    print(f"Searching for data in: {folder_path}")
 
     all_dfs = []
-
     try:
         if os.path.exists(folder_path):
-            # list all CSV files in the folder
             files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
-
             if not files:
                 st.error(f"No CSV files found in {folder_path}")
                 return pd.DataFrame()
-
+            
             for file in files:
                 file_full_path = os.path.join(folder_path, file)
                 temp_df = pd.read_csv(file_full_path)
                 all_dfs.append(temp_df)
 
-            # concatenate all DataFrames into one
-            full_df = pd.concat(all_dfs, ignore_index=True)
-            return full_df
+            return pd.concat(all_dfs, ignore_index=True)
         else:
+            # אם התיקייה לא נמצאה, ננסה נתיב יחסי פשוט
             st.error(f"Directory not found: {folder_path}")
             return pd.DataFrame()
-
     except Exception as e:
-        st.error(f"Error loading multiple countries: {e}")
+        st.error(f"Error: {e}")
         return pd.DataFrame()
 
 
