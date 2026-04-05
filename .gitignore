@@ -38,6 +38,7 @@ model/data/
 # Keep model configs only
 !model/checkpoints/*/config.json
 !model/checkpoints/*/trainer_state.json
+!model/checkpoints/turism_model_checkpoint_2240
 
 .env
 
