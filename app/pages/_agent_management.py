@@ -5,7 +5,6 @@ import pandas as pd
 import sys
 import time
 
-# --- 1. תיקון נתיבי ייבוא ומבנה פרויקט ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, "../../"))
 SCRAPED_DATA_ROOT = os.path.join(project_root, "ScrapedData")
@@ -19,7 +18,7 @@ except ImportError:
     st.error("Module 'scrappers' not found. Check folder structure.")
     st.stop()
 
-# --- 2. ניהול מצב (Session State) ---
+# stages markers
 if 'use_local' not in st.session_state:
     st.session_state.use_local = False
 if 'is_running' not in st.session_state:
@@ -29,7 +28,7 @@ if 'found_urls' not in st.session_state:
 if 'current_extracted_data' not in st.session_state:
     st.session_state.current_extracted_data = []
 
-# --- 3. הגדרות נתיבים לקבצים ---
+# define path for blogs configuration
 CONFIG_PATH = os.path.join(project_root, "blogs.json")
 
 
@@ -48,7 +47,7 @@ def save_blogs(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-# --- 4. ממשק המשתמש (UI) ---
+# --- UI ---
 st.set_page_config(page_title="Agent Management", page_icon="🤖", layout="wide")
 
 st.markdown("""
@@ -62,7 +61,7 @@ st.title("🤖 AI Travel Agent Control Panel")
 
 blogs_config = load_blogs()
 
-# --- 5. Sidebar: ניהול מקורות והגדרות ---
+# --- Sidebar ---
 with st.sidebar:
     st.header("⚙️ Control Center")
     if st.session_state.is_running:
@@ -117,7 +116,7 @@ with st.sidebar:
         else:
             st.info("Add a blog source first.")
 
-# --- 6. בחירה והרצה ---
+# --- check and run ---
 col_ctrl, col_log = st.columns([1, 2])
 with col_ctrl:
     st.subheader("🚀 Run Scraper")
@@ -135,7 +134,7 @@ with col_ctrl:
         st.session_state.current_extracted_data = []
         st.rerun()
 
-# --- 7. לוגיקת הסריקה (החלק המעודכן) ---
+# --- logic ---
 if st.session_state.is_running:
     llm_service = LLMManager(use_local=st.session_state.use_local)
     tasks = []
@@ -155,7 +154,6 @@ if st.session_state.is_running:
         for i, (b_name, dest) in enumerate(tasks):
             task_key = f"{b_name}_{dest['country']}"
 
-            # 1. הכנת נתיבי השמירה מראש
             blog_folder_name = b_name.replace(" ", "_")
             target_dir = os.path.join(SCRAPED_DATA_ROOT, blog_folder_name)
             os.makedirs(target_dir, exist_ok=True)
@@ -163,14 +161,12 @@ if st.session_state.is_running:
             clean_country = dest['country'].replace(" ", "_")
             full_path = os.path.join(target_dir, f"travel_data_{clean_country}.csv")
 
-            # 2. טעינת נתונים קיימים למניעת כפילויות
             existing_urls = set()
             if os.path.exists(full_path):
                 try:
                     existing_df = pd.read_csv(full_path)
                     if 'source_url' in existing_df.columns:
                         existing_urls = set(existing_df['source_url'].unique())
-                        # טוענים את הנתונים הקיימים ל-session_state כדי שהקובץ החדש יכלול גם אותם
                         st.session_state.current_extracted_data = existing_df.to_dict('records')
                 except Exception as e:
                     st.error(f"Error loading existing CSV: {e}")
@@ -178,7 +174,6 @@ if st.session_state.is_running:
             with col_log:
                 st.markdown(f"### 🌍 Processing: {dest['country']}")
 
-                # מציאת פוסטים
                 try:
                     if task_key not in st.session_state.found_urls:
                         with st.spinner("Finding articles..."):
@@ -188,7 +183,6 @@ if st.session_state.is_running:
                         urls = st.session_state.found_urls[task_key]
 
                     for url_idx, url in enumerate(urls):
-                        # בדיקה אם ה-URL כבר נסרק
                         if url in existing_urls:
                             st.info(f"⏭️ Skipping (Already Scanned): {url}")
                             continue
@@ -205,7 +199,6 @@ if st.session_state.is_running:
                                     row['blog_source'] = b_name
                                     st.session_state.current_extracted_data.append(row)
 
-                                # --- שמירה מיידית אחרי כל פוסט ---
                                 df_to_save = pd.DataFrame(st.session_state.current_extracted_data)
                                 df_to_save.to_csv(full_path, index=False, encoding='utf-8-sig')
 
@@ -226,7 +219,6 @@ if st.session_state.is_running:
                 except Exception as e:
                     st.error(f"Critical error in search: {e}")
 
-            # איפוס לקראת המדינה הבאה במחזור ה-tasks
             st.session_state.current_extracted_data = []
             progress.progress((i + 1) / len(tasks))
 
