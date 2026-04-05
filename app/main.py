@@ -111,7 +111,7 @@ def load_all_countries_data():
 
     # fallback: if the relative path doesn't work try an absolute path
     if not os.path.exists(folder_path):
-        folder_path = "../finalData"
+        folder_path = "finalData"
 
     all_dfs = []
 
