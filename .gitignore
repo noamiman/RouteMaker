@@ -9,6 +9,7 @@ env/
 *.egg-info/
 .installed.cfg
 *.egg
+.env
 
 # --- Scraper files (exclude) ---
 scrappers/base_scrapper.py
@@ -38,9 +39,7 @@ model/data/
 # Keep model configs only
 !model/checkpoints/*/config.json
 !model/checkpoints/*/trainer_state.json
-!model/checkpoints/turism_model_checkpoint_2240
 
-.env
 
 # --- Data & Scraped Content (Exclude CSVs except examples) ---
 DataProcess/Unified_Countries/*.csv
