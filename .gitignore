@@ -80,3 +80,6 @@ saved_itineraries/
 .DS_Store?
 ._*
 Thumbs.db
+
+app/pages/add_review.py
+app/pages/agent_management.py

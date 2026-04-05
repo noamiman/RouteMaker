@@ -3,7 +3,7 @@ import pandas as pd
 from thefuzz import fuzz
 import argparse
 
-def aggregate_by_country_refined(root_dir, output_dir="../finalData"):
+def aggregate_by_country_refined(root_dir, output_dir="../app/finalData"):
     os.makedirs(output_dir, exist_ok=True)
     countries_data = {}
 
