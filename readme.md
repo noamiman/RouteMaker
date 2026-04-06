@@ -326,22 +326,26 @@ Each source provides:
 
 ## 🧠 ML Model
 
-### Model Architecture
-- **Base Model:** Microsoft DeBERTa v3 Small
-- **Task:** Multi-label classification (10 categories)
-- **Input:** Place descriptions (max 128 tokens)
-- **Output:** Ratings 0-10 for each category
+The core of RouteMaker is a custom-trained scorer that transforms qualitative descriptions into quantitative metrics.
 
-### Training Data
-- Curated travel blog content
-- Human-annotated ratings
-- Multi-label classification approach
-- Fine-tuned on travel-specific language
+### 🚀 Hosted on Hugging Face
+The model is publicly available on the Hugging Face Hub:
+**[👉 roberta-finetuned-blog-analysis-10-labels](https://huggingface.co/noamiman/roberta-finetuned-blog-analysis-10-labels)**
+
+### Model Architecture & Training
+- **Base Model:** Microsoft DeBERTa v3 Small (optimized for RoBERTa-like performance in a small footprint).
+- **Task:** **Multi-output Regression** (10-dimensional experiential scoring).
+- **Knowledge Distillation:** The model was trained using a teacher-student approach. We used **Llama 3 (8B)** to generate synthetic labels for thousands of travel blog snippets, which this model then learned to predict with high efficiency.
+- **Input:** Place descriptions (max 128 tokens).
+- **Output:** Continuous ratings (0-10) for 10 categories.
+
+### 📊 Scoring Dimensions
+The model evaluates every location across 10 categories:
+*Romance, Family, Cost, Nature, Adventure, Culture, Food, Relaxation, Service, and Accessibility.*
 
 ### Performance
-- High accuracy on travel content classification
-- Robust handling of diverse writing styles
-- Efficient inference for batch processing
+- **Distilled Intelligence:** Achieves complex reasoning (distilled from Llama 3) while remaining lightweight enough to run on standard consumer hardware (MacBook Air).
+- **Custom Domain:** Fine-tuned specifically on travel-specific semantics and blog-style writing.
 
 ## 🤝 Contributing
 
