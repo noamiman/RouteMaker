@@ -38,7 +38,7 @@ class TravelSummarizer:
         except Exception as e:
             return f"Error: {e}"
 
-    def process_file(self, input_path, output_path=None, overwrite=False):
+    def process_file(self, input_path, output_path=None, overwrite=False, use_llm=False):
         """processes a single CSV file, aggregates descriptions by place,
          summarizes them using the specified model,
           and saves the results (overwrites if specified)."""
@@ -48,11 +48,17 @@ class TravelSummarizer:
         # define columns to check and aggregate
         cols_to_avg = ['romance', 'family', 'cost', 'nature', 'adventure',
                        'culture', 'food', 'relaxation', 'service', 'accessibility']
-
+        
+        if use_llm:
+            print(f"Summarizing with {self.model_name}...")
+            descr_func = lambda x: self._summarize_text(list(dict.fromkeys([str(d).strip() for d in x if pd.notna(d)]))[:3])
+        else:
+            descr_func = lambda x: "\n\n".join(list(dict.fromkeys([str(d).strip() for d in x if pd.notna(d)]))[:3])
+        
         agg_rules = {
             'country': 'first',
             'google_maps_url': 'first',
-            'description': lambda x: "\n\n".join(list(dict.fromkeys([str(d).strip() for d in x if pd.notna(d) and str(d).strip() != ""]))[:3])  # you can change to lambda if LLM is enabled
+            'description': descr_func
         }
 
         extra_cols = ['region', 'place_type', 'blog_source']
@@ -78,13 +84,12 @@ class TravelSummarizer:
         df_grouped[actual_numeric_cols] = df_grouped[actual_numeric_cols].fillna(0)
         # heuristic cost adjustment
         if 'cost' in df_grouped.columns:
-            df_grouped['cost'] = df_grouped['cost'] * 2
+            df_grouped['cost'] = (df_grouped['cost'] * 2).clip(0, 10)
 
         df_grouped[actual_numeric_cols] = df_grouped[actual_numeric_cols].round(0).astype(int)
         all_text_cols = ['description', 'country', 'google_maps_url'] + extra_cols
         for col in all_text_cols:
             if col in df_grouped.columns:
-                # הופך NaN למחרוזת ריקה באמת
                 df_grouped[col] = df_grouped[col].fillna("")
 
         print("Using the first 3 available descriptions (skipping LLM)...")
@@ -100,7 +105,7 @@ class TravelSummarizer:
         df_grouped.to_csv(final_path, index=False, encoding='utf-8-sig')
         print(f"Saved to: {final_path}")
 
-    def process_folder(self, folder_path, output_folder, overwrite=False):
+    def process_folder(self, folder_path, output_folder, overwrite=False, use_llm=False):
         """processes all CSV files in a folder. If overwrite is True, ignores output_folder."""
         if not overwrite and not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -110,27 +115,25 @@ class TravelSummarizer:
 
         for file in files:
             input_path = os.path.join(folder_path, file)
+            output_path = None if overwrite else os.path.join(output_folder, f"summarized_{file}")
+            self.process_file(input_path, output_path, overwrite, use_llm=use_llm)
 
-            if overwrite:
-                self.process_file(input_path, overwrite=True)
-            else:
-                output_path = os.path.join(output_folder, f"summarized_{file}")
-                self.process_file(input_path, output_path)
 
 
 # --- using ---
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create final summarized travel data")
-    parser.add_argument("--input", "-i", default="../finalData",
+    parser.add_argument("--input", "-i", default="../app/finalData",
                        help="Input directory containing processed CSV files")
-    parser.add_argument("--output", "-o", default="../finalData",
+    parser.add_argument("--output", "-o", default="../app/finalData",
                        help="Output directory for summarized files")
     parser.add_argument("--overwrite", action="store_true",
                        help="Overwrite existing files instead of creating new ones")
     parser.add_argument("--model", "-m", default="qwen2.5:0.5b",
                        help="Ollama model name for summarization")
+    parser.add_argument("--summarize", action="store_true", help="Enable LLM summarization")
 
     args = parser.parse_args()
 
     summarizer = TravelSummarizer(model_name=args.model)
-    summarizer.process_folder(args.input, args.output, overwrite=args.overwrite)
+    summarizer.process_folder(args.input, args.output, overwrite=args.overwrite, use_llm=args.summarize)

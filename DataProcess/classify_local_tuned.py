@@ -5,7 +5,6 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from tqdm import tqdm
 import argparse
 
-
 class TravelClassifier:
     def __init__(self, model_path, device=None):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -107,7 +106,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Classify travel places using ML model")
     parser.add_argument("--model", "-m", default="../model/checkpoints/tourism_model_checkpoint_2240",
                        help="Path to the trained model directory")
-    parser.add_argument("--data", "-d", default="../finalData",
+    parser.add_argument("--data", "-d", default="../app/finalData",
                        help="Directory containing CSV files to classify")
     parser.add_argument("--force", action="store_true",
                        help="Force re-processing even if files already have classifications")
