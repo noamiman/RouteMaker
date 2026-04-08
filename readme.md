@@ -290,3 +290,5 @@ Noamiman
 
 LinkedIn:
 - https://www.linkedin.com/in/noamiman/
+
+If you work on travel, data, or ML products, I would be glad to connect.
