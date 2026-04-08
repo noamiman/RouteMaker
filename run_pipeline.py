@@ -22,6 +22,8 @@ import subprocess
 import time
 from pathlib import Path
 
+from routemaker_paths import MODEL_CHECKPOINT_DIR, PROCESSED_DATA_DIR
+
 
 def run_script(script_path, args=None, description=""):
     """Run a Python script and handle errors."""
@@ -89,8 +91,8 @@ def main():
 
     # Check if required directories exist
     scraped_data_dir = base_dir / "ScrapedData"
-    final_data_dir = base_dir / "finalData"
-    model_dir = base_dir / "model" / "checkpoints" / "tourism_model_checkpoint_2240"
+    final_data_dir = PROCESSED_DATA_DIR
+    model_dir = MODEL_CHECKPOINT_DIR
 
     if not scraped_data_dir.exists():
         print(f"❌ Error: ScrapedData directory not found: {scraped_data_dir}")

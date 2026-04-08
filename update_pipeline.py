@@ -6,7 +6,7 @@ This script intelligently merges NEW data (from agent scraping or user reviews)
 with existing processed data using weighted averages to preserve statistical accuracy.
 
 Usage:
-    python update_pipeline.py --new-data NEW_DATA/ --base-data finalData/
+    python update_pipeline.py --new-data NEW_DATA/ --base-data app/finalData/
     
 This ensures:
 - Fast processing (only NEW data gets classified)
@@ -22,8 +22,21 @@ from datetime import datetime
 from pathlib import Path
 from thefuzz import fuzz
 
+from routemaker_paths import MODEL_CHECKPOINT_DIR, PROCESSED_DATA_DIR
+
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'DataProcess'))
+
+
+PLACEHOLDER_PHRASES = [
+    "not mentioned in this text",
+    "no specific details",
+    "no direct information",
+    "no specific description available",
+    "no description available",
+    "there is no specific description",
+    "not enough information",
+]
 
 
 class IncrementalUpdater:
@@ -32,13 +45,89 @@ class IncrementalUpdater:
         Initialize the incremental updater.
         
         Args:
-            base_data_dir: Path to finalData/ with existing processed data
+            base_data_dir: Path to app/finalData/ with existing processed data
             model_path: Path to ML model for classifying new descriptions
         """
         self.base_data_dir = base_data_dir
         self.model_path = model_path
         self.categories = ['romance', 'family', 'cost', 'nature', 'adventure', 
                           'culture', 'food', 'relaxation', 'service', 'accessibility']
+
+    @staticmethod
+    def clean_text_value(value):
+        """Normalize null-like values to empty strings for schema validation."""
+        if pd.isna(value):
+            return ''
+
+        cleaned_value = str(value).strip()
+        if cleaned_value.lower() in {'nan', 'none', 'null'}:
+            return ''
+        return cleaned_value
+
+    def has_complete_ratings(self, row):
+        """Return True when a row already carries explicit scores for all categories."""
+        for category in self.categories:
+            if category not in row.index or pd.isna(row[category]):
+                return False
+        return True
+
+    @staticmethod
+    def is_placeholder_description(text):
+        normalized = str(text).strip().lower()
+        if not normalized:
+            return True
+
+        for phrase in PLACEHOLDER_PHRASES:
+            if phrase in normalized:
+                return True
+
+        return False
+
+    def normalize_new_data(self, new_df):
+        """Normalize incoming files to the processed-data contract."""
+        normalized_df = new_df.copy()
+        normalized_df.columns = [str(col).strip() for col in normalized_df.columns]
+
+        if 'description' not in normalized_df.columns and 'text' in normalized_df.columns:
+            normalized_df = normalized_df.rename(columns={'text': 'description'})
+
+        required_columns = ['country', 'place', 'description']
+        missing_required = [col for col in required_columns if col not in normalized_df.columns]
+        if missing_required:
+            raise ValueError(f"Missing required columns: {', '.join(missing_required)}")
+
+        for column in ['region', 'place_type', 'google_maps_url', 'blog_source']:
+            if column not in normalized_df.columns:
+                normalized_df[column] = ''
+
+        if 'source' in normalized_df.columns:
+            normalized_df['blog_source'] = normalized_df['blog_source'].where(
+                normalized_df['blog_source'].astype(str).str.strip() != '',
+                normalized_df['source']
+            )
+
+        if 'is_manual_entry' in normalized_df.columns:
+            manual_mask = normalized_df['is_manual_entry'].fillna(False).astype(bool)
+            normalized_df.loc[manual_mask, 'blog_source'] = normalized_df.loc[manual_mask, 'blog_source'].where(
+                normalized_df.loc[manual_mask, 'blog_source'].astype(str).str.strip() != '',
+                'user_review'
+            )
+
+        normalized_df['country'] = normalized_df['country'].apply(self.clean_text_value)
+        normalized_df['place'] = normalized_df['place'].apply(self.clean_text_value)
+        normalized_df['description'] = normalized_df['description'].apply(self.clean_text_value)
+
+        normalized_df = normalized_df[
+            (normalized_df['country'] != '') &
+            (normalized_df['place'] != '') &
+            (normalized_df['description'] != '')
+        ].copy()
+
+        normalized_df = normalized_df[
+            ~normalized_df['description'].apply(self.is_placeholder_description)
+        ].copy()
+
+        return normalized_df
         
     def load_base_data(self, country):
         """Load existing processed data for a country."""
@@ -58,6 +147,15 @@ class IncrementalUpdater:
             DataFrame with classification scores
         """
         print(f"🔬 Classifying {len(new_df)} new descriptions...")
+
+        provided_ratings_mask = new_df.apply(self.has_complete_ratings, axis=1)
+        provided_ratings_count = int(provided_ratings_mask.sum())
+        if provided_ratings_count:
+            print(f"   Reusing provided ratings for {provided_ratings_count} rows")
+
+        if provided_ratings_count == len(new_df):
+            print("   All rows already have ratings; skipping ML classification")
+            return new_df
         
         # Dynamically import classifier
         try:
@@ -71,6 +169,8 @@ class IncrementalUpdater:
             
             # Classify descriptions
             for idx, row in new_df.iterrows():
+                if provided_ratings_mask.loc[idx]:
+                    continue
                 try:
                     predictions = classifier.predict(str(row['description']))
                     for cat in self.categories:
@@ -84,6 +184,12 @@ class IncrementalUpdater:
             for cat in self.categories:
                 if cat not in new_df.columns:
                     new_df[cat] = 5
+            for idx in new_df.index:
+                if provided_ratings_mask.loc[idx]:
+                    continue
+                for cat in self.categories:
+                    if pd.isna(new_df.at[idx, cat]):
+                        new_df.at[idx, cat] = 5
             return new_df
     
     def weighted_merge(self, old_row, new_rows, country):
@@ -181,7 +287,12 @@ class IncrementalUpdater:
         # 3. Add completely new places
         truly_new = new_places - base_places
         for place in truly_new:
-            merged_rows.append(new_country_df[new_country_df['place'] == place].iloc[0])
+            new_row = new_country_df[new_country_df['place'] == place].iloc[0].copy()
+            if 'description_count' not in new_row.index or pd.isna(new_row.get('description_count')):
+                new_row['description_count'] = 1
+            if 'last_updated' not in new_row.index or pd.isna(new_row.get('last_updated')):
+                new_row['last_updated'] = datetime.now().strftime('%Y-%m-%d')
+            merged_rows.append(new_row)
         
         print(f"   Result: {len(merged_rows)} total places (unchanged: {len(unchanged)}, merged: {len(overlapping)}, new: {len(truly_new)})")
         
@@ -226,7 +337,12 @@ class IncrementalUpdater:
             print(f"   Loaded: {file} ({len(df)} rows)")
         
         new_data_combined = pd.concat(all_new_data, ignore_index=True)
+        new_data_combined = self.normalize_new_data(new_data_combined)
         print(f"   Total new: {len(new_data_combined)} rows")
+
+        if new_data_combined.empty:
+            print("❌ No valid rows found after schema normalization")
+            return False
         
         # Step 2: Classify new data
         print(f"\n⚙️  Step 2: Classifying new data...")
@@ -271,11 +387,11 @@ def main():
     parser = argparse.ArgumentParser(description="Incrementally update travel data with new entries")
     parser.add_argument("--new-data", "-n", required=True,
                        help="Directory containing new CSV files (agent scraped or user reviews)")
-    parser.add_argument("--base-data", "-b", default="finalData",
-                       help="Directory with existing processed data (default: finalData)")
+    parser.add_argument("--base-data", "-b", default=str(PROCESSED_DATA_DIR),
+                       help="Directory with existing processed data (default: app/finalData)")
     parser.add_argument("--output", "-o", default=None,
                        help="Output directory (default: same as base-data)")
-    parser.add_argument("--model", "-m", default="model/checkpoints/tourism_model_checkpoint_2240",
+    parser.add_argument("--model", "-m", default=str(MODEL_CHECKPOINT_DIR),
                        help="ML model checkpoint path")
     
     args = parser.parse_args()

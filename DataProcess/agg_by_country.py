@@ -3,6 +3,29 @@ import pandas as pd
 from thefuzz import fuzz
 import argparse
 
+
+PLACEHOLDER_PHRASES = [
+    "not mentioned in this text",
+    "no specific details",
+    "no direct information",
+    "no specific description available",
+    "no description available",
+    "there is no specific description",
+    "not enough information",
+]
+
+
+def is_placeholder_description(text):
+    normalized = str(text).strip().lower()
+    if not normalized:
+        return True
+
+    for phrase in PLACEHOLDER_PHRASES:
+        if phrase in normalized:
+            return True
+
+    return False
+
 def aggregate_by_country_refined(root_dir, output_dir="../app/finalData"):
     os.makedirs(output_dir, exist_ok=True)
     countries_data = {}
@@ -25,6 +48,9 @@ def aggregate_by_country_refined(root_dir, output_dir="../app/finalData"):
                     if not place_name or place_name.lower() == 'nan' or not desc or desc.lower() == 'nan':
                         continue
 
+                    if is_placeholder_description(desc):
+                        continue
+
                     if country not in countries_data:
                         countries_data[country] = {}
 
@@ -36,7 +62,7 @@ def aggregate_by_country_refined(root_dir, output_dir="../app/finalData"):
 
                     target_name = found_match if found_match else place_name
 
-                    # 1. אתחול מקום חדש אם לא קיים
+                    # 1) Initialize a new place bucket when missing.
                     if target_name not in countries_data[country]:
                         countries_data[country][target_name] = {
                             "descriptions": [],
@@ -48,7 +74,7 @@ def aggregate_by_country_refined(root_dir, output_dir="../app/finalData"):
 
                     target_obj = countries_data[country][target_name]
 
-                    # 2. הוספת תיאור (בדיקת כפילות פאזי)
+                    # 2) Add description with fuzzy duplicate filtering.
                     is_duplicate_desc = False
                     for existing_desc in target_obj["descriptions"]:
                         if fuzz.ratio(desc.lower(), existing_desc.lower()) > 85:
@@ -57,7 +83,7 @@ def aggregate_by_country_refined(root_dir, output_dir="../app/finalData"):
                     if not is_duplicate_desc:
                         target_obj["descriptions"].append(desc)
 
-                    # 3. עדכון שדות נוספים רק אם הם ריקים (כדי לא לדרוס מידע קיים)
+                    # 3) Populate metadata fields only when currently empty.
                     if not target_obj["google_maps_url"]:
                         map_url = row.get('google_maps_url', row.get('map_link', ''))
                         if pd.notna(map_url) and str(map_url).strip() != '':
@@ -75,7 +101,7 @@ def aggregate_by_country_refined(root_dir, output_dir="../app/finalData"):
                         val = row.get('blog_source', '')
                         if pd.notna(val): target_obj["blog_source"] = str(val).strip()
 
-    # 4. יצירת ה-CSV לכל מדינה
+    # 4) Write one processed CSV per country.
     for country, places in countries_data.items():
         final_rows = []
         for name, info in places.items():
@@ -102,7 +128,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Aggregate travel data by country")
     parser.add_argument("--input", "-i", default="../ScrapedData",
                        help="Input directory containing scraped data")
-    parser.add_argument("--output", "-o", default="../finalData",
+    parser.add_argument("--output", "-o", default="../app/finalData",
                        help="Output directory for processed files")
     args = parser.parse_args()
 

@@ -7,7 +7,7 @@ from output.pdf_maker import pdfMaker, GoogleMapsIntegrator
 OUTPUT_FOLDER = "saved_itineraries"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-# --- Default Stations Database ---
+# --- Default Stations Database template ---
 DEFAULT_STATIONS = {
     "Thailand": [
         {
@@ -99,13 +99,10 @@ st.markdown("""
 
 @st.cache_data
 def load_all_countries_data():
-    # מוצא את התיקייה שבה נמצא הקובץ הנוכחי (main.py)
     base_path = os.path.dirname(__file__) 
     
-    # בונה נתיב לתיקייה finalData שנמצאת באותו מקום
     folder_path = os.path.join(base_path, "finalData")
 
-    # הדפסה לדיבאג (תראה אותה ב-Logs של Streamlit)
     print(f"Searching for data in: {folder_path}")
 
     all_dfs = []
@@ -123,7 +120,6 @@ def load_all_countries_data():
 
             return pd.concat(all_dfs, ignore_index=True)
         else:
-            # אם התיקייה לא נמצאה, ננסה נתיב יחסי פשוט
             st.error(f"Directory not found: {folder_path}")
             return pd.DataFrame()
     except Exception as e:
@@ -414,7 +410,7 @@ if not df.empty:
                             location_line += f" | {region_val}"
                         st.markdown(location_line)
 
-                        # כפתור מפה
+                        # map link
                         maps_url = row.get('google_maps_url')
                         if pd.notna(maps_url) and maps_url != "":
                             btn_col, _ = st.columns([1.2, 2])
@@ -623,7 +619,7 @@ if not df.empty:
                             st.download_button("📥 Download PDF", f, file_name=pdf_filename, mime="application/pdf",
                                                use_container_width=True)
                     with col_kml:
-                        with open(kml_path, "rb") as f:  # שיניתי ל-"rb" ליתר ביטחון
+                        with open(kml_path, "rb") as f:  # Use binary mode for safer cross-platform downloads.
                             st.download_button("🗺️ Download KML", f, file_name=kml_filename,
                                                mime="application/vnd.google-earth.kml+xml", use_container_width=True)
 

@@ -1,5 +1,5 @@
-country,place,description,place_type
-France,Eiffel Tower,A stunning iron monument with breathtaking city views and romantic ambiance.,landmark
-Japan,Mount Fuji,A sacred volcano offering challenging hikes and stunning natural scenery.,nature
-Thailand,Bangkok,A vibrant city with ornate temples and bustling street markets.,city
-Italy,Venice,A historic city built on canals with unique architecture and rich culture.,city
+country,place,region,place_type,google_maps_url,description
+France,Eiffel Tower,Paris,landmark,https://www.google.com/maps/place/Eiffel+Tower,A stunning iron monument with breathtaking city views and romantic ambiance.
+Japan,Mount Fuji,Shizuoka,nature,https://www.google.com/maps/place/Mount+Fuji,A sacred volcano offering challenging hikes and stunning natural scenery.
+Thailand,Wat Arun,Bangkok,temple,https://www.google.com/maps/place/Wat+Arun,Beautiful riverside temple with dramatic architecture and excellent sunset views.
+Italy,Venice,Veneto,city,https://www.google.com/maps/place/Venice,A historic city built on canals with unique architecture and rich culture.

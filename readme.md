@@ -62,7 +62,7 @@ Travel Route Maker
 │   ├── agg_by_country.py    # Data aggregation & deduplication
 │   ├── classify_local_tuned.py # ML classification
 │   └── final_result.py      # Final summarization
-├── 📁 finalData/            # Processed, classified data
+├── 📁 app/finalData/        # Canonical processed, classified data
 ├── 📁 model/                # ML model checkpoints
 ├── 📁 app/                  # Streamlit web application
 │   ├── main.py             # Main application
@@ -109,7 +109,7 @@ python run_pipeline.py
 - Schema or processing logic changes
 - Admin maintenance tasks
 
-**Note:** Overwrites `finalData/` completely. Use carefully.
+**Note:** Rebuilds the canonical processed dataset in `app/finalData/`. Use carefully.
 
 ### Pipeline Architecture
 
@@ -121,12 +121,13 @@ The data processing pipeline consists of three main stages:
 - Reads all CSV files from subdirectories
 - Groups data by country using fuzzy string matching
 - Removes duplicate descriptions (85% similarity threshold)
+- Drops low-information placeholder descriptions (e.g. "Not mentioned in this text")
 - Consolidates place information (URLs, types, regions)
 
-**Output:** Country-specific processed CSV files in `finalData/`
+**Output:** Country-specific processed CSV files in `app/finalData/`
 
 ### 2. ML Classification (`classify_local_tuned.py`)
-**Input:** Processed CSV files from `finalData/`  
+**Input:** Processed CSV files from `app/finalData/`  
 **Process:**
 - Uses fine-tuned DeBERTa model for text classification
 - Analyzes place descriptions for 10 categories:
@@ -192,6 +193,22 @@ ls model/checkpoints/tourism_model_checkpoint_2240/
 
 ## 📖 Usage
 
+### Common Commands
+
+```bash
+# Run lightweight automated checks
+make test
+
+# Validate processed dataset health
+make validate-data
+
+# Incremental update from NEW_DATA/
+make update
+
+# Full rebuild pipeline
+make rebuild
+```
+
 ### Quick Start
 
 1. **Start the web application:**
@@ -224,7 +241,7 @@ python update_pipeline.py --new-data NEW_DATA/
    - New descriptions automatically classified
    - Existing places merged with weighted averaging
    - Statistics displayed (unchanged/merged/new counts)
-   - `finalData/` updated with new data
+  - `app/finalData/` updated with new data
 
 #### Using Full Rebuild (Maintenance Only)
 
@@ -246,13 +263,24 @@ python run_pipeline.py --skip-classification
 
 ```bash
 # Step 1: Aggregate data
-python DataProcess/agg_by_country.py --input ScrapedData --output finalData
+python DataProcess/agg_by_country.py --input ScrapedData --output app/finalData
 
 # Step 2: Classify places
-python DataProcess/classify_local_tuned.py --model model/checkpoints/tourism_model_checkpoint_2240 --data finalData
+python DataProcess/classify_local_tuned.py --model model/checkpoints/tourism_model_checkpoint_2240 --data app/finalData
 
-# Step 3: Final processing
-python DataProcess/final_result.py --input finalData --output finalData --overwrite
+# Step 3: Final processing with AI Summarization (Optional)
+# This will use Ollama to generate a professional 2-3 sentence summary
+python DataProcess/final_result.py --input app/finalData --summarize --model qwen2.5:0.5b --overwrite
+```
+
+### Validation Checks
+
+```bash
+# Run lightweight automated checks
+python -m unittest discover tests
+
+# Validate processed CSV health (schema + placeholder scan)
+python scripts/validate_pipeline.py --data-dir app/finalData
 ```
 
 ### Web Application Features
@@ -286,7 +314,7 @@ RouteMaker/
 │   ├── classify_local_tuned.py    # ML classification
 │   └── final_result.py            # Final summarization
 │
-├── 📁 finalData/                   # Processed datasets
+├── 📁 app/finalData/               # Canonical processed datasets
 │   ├── Albania_processed.csv
 │   ├── Vietnam_processed.csv
 │   └── ...
@@ -353,7 +381,7 @@ The model evaluates every location across 10 categories:
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/new-feature`
 3. Make your changes
-4. Run tests: `python run_pipeline.py --force`
+4. Run checks: `make test && make validate-data`
 5. Commit changes: `git commit -am 'Add new feature'`
 6. Push to branch: `git push origin feature/new-feature`
 7. Submit a pull request

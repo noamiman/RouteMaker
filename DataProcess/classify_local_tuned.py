@@ -5,6 +5,9 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from tqdm import tqdm
 import argparse
 
+
+REQUIRED_COLUMNS = ["place", "description"]
+
 class TravelClassifier:
     def __init__(self, model_path, device=None):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -58,6 +61,13 @@ class TravelClassifier:
 
         df = pd.read_csv(file_path)
 
+        missing_columns = [col for col in REQUIRED_COLUMNS if col not in df.columns]
+        if missing_columns:
+            print(
+                f"Skipping {os.path.basename(file_path)} - missing required columns: {', '.join(missing_columns)}"
+            )
+            return
+
         has_labels = all(col in df.columns for col in self.label_keys)
 
         if has_labels and not force_update:
@@ -91,6 +101,10 @@ class TravelClassifier:
     def process_all_csvs(self, root_dir, force_update=False):
         """processes all CSV files in the specified directory and its subdirectories."""
         print(f"Starting batch processing in: {root_dir}")
+
+        if not os.path.exists(root_dir):
+            print(f"Data directory not found: {root_dir}")
+            return
 
         for root, _, files in os.walk(root_dir):
             for file in files:

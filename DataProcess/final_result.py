@@ -6,6 +6,9 @@ import argparse
 from datetime import datetime
 
 
+REQUIRED_COLUMNS = ['place', 'description', 'country']
+
+
 class TravelSummarizer:
     def __init__(self, model_name='qwen2.5:0.5b', num_descriptions=3):
         self.model_name = model_name
@@ -44,6 +47,13 @@ class TravelSummarizer:
           and saves the results (overwrites if specified)."""
         print(f"\n--- Processing: {input_path} ---")
         df = pd.read_csv(input_path)
+
+        missing_columns = [col for col in REQUIRED_COLUMNS if col not in df.columns]
+        if missing_columns:
+            print(
+                f"Skipping {input_path} - missing required columns: {', '.join(missing_columns)}"
+            )
+            return
 
         # define columns to check and aggregate
         cols_to_avg = ['romance', 'family', 'cost', 'nature', 'adventure',
@@ -107,6 +117,10 @@ class TravelSummarizer:
 
     def process_folder(self, folder_path, output_folder, overwrite=False, use_llm=False):
         """processes all CSV files in a folder. If overwrite is True, ignores output_folder."""
+        if not os.path.exists(folder_path):
+            print(f"Input directory not found: {folder_path}")
+            return
+
         if not overwrite and not os.path.exists(output_folder):
             os.makedirs(output_folder)
 

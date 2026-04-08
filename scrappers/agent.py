@@ -11,6 +11,7 @@ import json
 from urllib.parse import urlparse
 from langchain_ollama import ChatOllama
 import sys
+import re
 
 # --- 1. Path and Environment Management ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +21,17 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 load_dotenv(os.path.join(project_root, ".env"))
+
+
+PLACEHOLDER_PHRASES = [
+    "not mentioned in this text",
+    "no specific details",
+    "no direct information",
+    "no specific description available",
+    "no description available",
+    "there is no specific description",
+    "not enough information",
+]
 
 # --- 2. Data Models (Pydantic) ---
 class TravelPlace(BaseModel):
@@ -32,6 +44,30 @@ class TravelPlace(BaseModel):
 
 class TravelDataList(BaseModel):
     places: List[TravelPlace]
+
+
+def clean_text_value(value: Optional[str]) -> str:
+    if value is None:
+        return ""
+
+    text = str(value).strip()
+    if text.lower() in {"nan", "none", "null", "n/a"}:
+        return ""
+
+    # Normalize whitespace and line breaks to reduce noisy duplicates.
+    return re.sub(r"\s+", " ", text)
+
+
+def is_placeholder_description(text: str) -> bool:
+    normalized = clean_text_value(text).lower()
+    if not normalized:
+        return True
+
+    for phrase in PLACEHOLDER_PHRASES:
+        if phrase in normalized:
+            return True
+
+    return False
 
 # --- 3. LLM Management (Required for Streamlit) ---
 class LLMManager:
@@ -164,6 +200,8 @@ def extract_data_from_post(llm_service: LLMManager, url: str, country_name: str)
             - DO NOT summarize or rewrite the author's words.
             - CAPTURE the author's original review, specific feedback, and sentiment.
             - INCLUDE specific details.
+            - If the text has no meaningful description for a place, DO NOT output that place.
+            - NEVER use filler descriptions like "Not mentioned in this text" or "No specific details".
 
             Return JSON: {{ "places": [ {{ "place": "...", "country": "{country_name}", "region": "...", "place_type": "...", "google_maps_url": "...", "description": "..." }} ] }}
 
@@ -186,9 +224,26 @@ def extract_data_from_post(llm_service: LLMManager, url: str, country_name: str)
 
         filtered_places = []
         for p in raw_places:
-            ext_country = p.get("country", "").strip().lower()
-            if country_name.lower() in ext_country or ext_country in country_name.lower():
-                filtered_places.append(TravelPlace(**p))
+            ext_country = clean_text_value(p.get("country", "")).lower()
+            if ext_country and not (country_name.lower() in ext_country or ext_country in country_name.lower()):
+                continue
+
+            cleaned_place = {
+                "place": clean_text_value(p.get("place", "")),
+                "country": clean_text_value(p.get("country", "")) or country_name,
+                "region": clean_text_value(p.get("region", "")),
+                "place_type": clean_text_value(p.get("place_type", "")),
+                "google_maps_url": clean_text_value(p.get("google_maps_url", "")),
+                "description": clean_text_value(p.get("description", "")),
+            }
+
+            if not cleaned_place["place"]:
+                continue
+
+            if is_placeholder_description(cleaned_place["description"]):
+                continue
+
+            filtered_places.append(TravelPlace(**cleaned_place))
         return TravelDataList(places=filtered_places)
     except Exception as e:
         print(f"⚠️ Extraction error at {url}: {e}")
