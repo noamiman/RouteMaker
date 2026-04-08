@@ -9,19 +9,40 @@ The project combines data engineering, ML inference, and a user-facing planning 
 - Streamlit itinerary planning interface
 - PDF and KML export for trip sharing and navigation
 
+## Summary
+
+RouteMaker helps travelers plan personalized routes instead of relying on generic ratings.
+
+Instead of asking "is this place 4.5 stars?", it asks:
+- Is it good for my travel style?
+- Does it fit my route and pace?
+- Is it a good match for what I care about (adventure, food, culture, relaxation, etc.)?
+
+The result is a practical route-planning workflow: discover places, score by preference, build your itinerary, and export a complete PDF with your route details.
+
+## Why This Project Exists
+
+The idea came from real travel experience.
+
+While traveling, I realized that a single Google Maps score (for example 4.5) often does not tell you what you actually need to plan a meaningful trip. A high rating does not explain if the place is romantic, family-friendly, relaxing, adventurous, or worth adding to your specific route.
+
+RouteMaker was built to solve that gap: make travel planning more personal, more structured, and easier to act on. It lets users build a route tailored to their preferences and export the full plan as a PDF with route details.
+
 ## Table of Contents
 
-1. [What This Project Does](#what-this-project-does)
-2. [How the System Works](#how-the-system-works)
-3. [Project Layout](#project-layout)
-4. [Setup](#setup)
-5. [Run the App](#run-the-app)
-6. [Pipeline Workflows](#pipeline-workflows)
-7. [NEW_DATA Contract](#new_data-contract)
-8. [Validation and Quality Gates](#validation-and-quality-gates)
-9. [Common Commands](#common-commands)
-10. [Troubleshooting](#troubleshooting)
-11. [Author](#author)
+1. [Summary](#summary)
+2. [Why This Project Exists](#why-this-project-exists)
+3. [What This Project Does](#what-this-project-does)
+4. [How the System Works](#how-the-system-works)
+5. [Project Layout](#project-layout)
+6. [Setup](#setup)
+7. [Run the App](#run-the-app)
+8. [Pipeline Workflows](#pipeline-workflows)
+9. [NEW_DATA Contract](#new_data-contract)
+10. [Validation and Quality Gates](#validation-and-quality-gates)
+11. [Common Commands](#common-commands)
+12. [Troubleshooting](#troubleshooting)
+13. [Author](#author)
 
 ## What This Project Does
 
