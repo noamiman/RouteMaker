@@ -1,205 +1,208 @@
-# 🌍 Travel Route Maker
+# RouteMaker
 
-An intelligent travel planning application that combines web scraping, machine learning classification, and interactive itinerary building to create personalized travel experiences.
+RouteMaker is a travel planning platform that transforms unstructured travel-blog content into structured, scored destination data, then exposes it through an interactive itinerary planner.
 
-## 📋 Table of Contents
+The project combines data engineering, ML inference, and a user-facing planning UI:
+- Web data ingestion from multiple travel sources
+- Place cleaning and deduplication
+- 10-category place scoring with a fine-tuned model
+- Streamlit itinerary planning interface
+- PDF and KML export for trip sharing and navigation
 
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Data Pipeline](#data-pipeline)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Data Sources](#data-sources)
-- [ML Model](#ml-model)
-- [Contributing](#contributing)
+## Table of Contents
 
-## 🎯 Overview
+1. [What This Project Does](#what-this-project-does)
+2. [How the System Works](#how-the-system-works)
+3. [Project Layout](#project-layout)
+4. [Setup](#setup)
+5. [Run the App](#run-the-app)
+6. [Pipeline Workflows](#pipeline-workflows)
+7. [NEW_DATA Contract](#new_data-contract)
+8. [Validation and Quality Gates](#validation-and-quality-gates)
+9. [Common Commands](#common-commands)
+10. [Troubleshooting](#troubleshooting)
+11. [Author](#author)
 
-Travel Route Maker is a comprehensive travel planning platform that:
+## What This Project Does
 
-1. **Scrapes** travel blog data from multiple sources
-2. **Processes** and cleans the data using fuzzy matching
-3. **Classifies** destinations using a fine-tuned ML model
-4. **Provides** an interactive web interface for itinerary planning
-5. **Generates** PDF guides and KML maps for trips
+RouteMaker is designed to answer one practical question: how can we turn noisy travel content into actionable planning data?
 
-The system transforms raw travel blog content into structured, classified data that travelers can use to build custom itineraries with ratings for romance, adventure, family-friendliness, cost, and more.
+It supports this end-to-end flow:
+1. Collect place mentions and descriptions from travel content.
+2. Normalize and deduplicate place records.
+3. Score each place across key traveler dimensions.
+4. Let users filter, compare, and assemble day-by-day routes.
+5. Export trip outputs into portable formats.
 
-## ✨ Features
+### Main User Capabilities
 
-### 🕷️ Data Collection
-- Multi-source web scraping from travel blogs
-- Automated data extraction and cleaning
-- Fuzzy matching for duplicate removal
-- Country-wise data aggregation
+- Browse places by country and region
+- Filter by place type and category scores
+- Build multi-day routes
+- Add manual place reviews through the app
+- Export itineraries to PDF and KML
 
-### 🤖 Machine Learning
-- Fine-tuned DeBERTa model for place classification
-- 10-dimensional rating system (romance, family, cost, nature, adventure, culture, food, relaxation, service, accessibility)
-- Automated content analysis and scoring
+## How the System Works
 
-### 🌐 Web Application
-- Interactive Streamlit-based interface
-- Multi-route itinerary management
-- Advanced filtering and search capabilities
-- Real-time map integration
-- PDF and KML export functionality
+### High-Level Architecture
 
-### 📊 Data Processing Pipeline
-- Automated end-to-end data processing
-- Configurable pipeline steps
-- Progress tracking and error handling
-- Batch processing capabilities
+1. Raw scraped data lands under `ScrapedData/`.
+2. Data pipeline builds processed country files.
+3. Canonical processed output is stored in `app/finalData/`.
+4. Streamlit app reads only from `app/finalData/`.
 
-## 🏗️ Architecture
+Canonical processed data location:
+- `app/finalData/`
 
+### Pipeline Stages
+
+The full rebuild pipeline runs in three steps:
+
+1. Aggregation: `DataProcess/agg_by_country.py`
+- Reads raw CSV files
+- Merges near-duplicate place names
+- Removes duplicate descriptions
+- Filters low-information placeholder descriptions
+
+2. Classification: `DataProcess/classify_local_tuned.py`
+- Loads the fine-tuned classifier
+- Produces 10 category scores per description
+- Adds rating columns to processed rows
+
+3. Final summarization: `DataProcess/final_result.py`
+- Aggregates per-place descriptions
+- Computes per-place score outputs
+- Adds lineage fields (`description_count`, `last_updated`)
+
+## Project Layout
+
+```text
+RouteMaker/
+├── app/
+│   ├── main.py                 # Streamlit app entrypoint
+│   ├── pages/                  # Extra app pages (review/admin)
+│   ├── output/                 # PDF/KML helpers
+│   └── finalData/              # Canonical processed datasets
+├── DataProcess/                # Pipeline stages
+├── scrappers/                  # Extraction/scraping logic
+├── NEW_DATA/                   # Incoming incremental update files
+├── scripts/                    # Utility and validation scripts
+├── tests/                      # Automated tests
+├── run_pipeline.py             # Full rebuild runner
+├── update_pipeline.py          # Incremental updater
+├── Makefile                    # Common dev commands
+└── readme.md
 ```
-Travel Route Maker
-├── 📁 ScrapedData/          # Raw scraped travel data
-├── 📁 DataProcess/          # Data processing scripts
-│   ├── agg_by_country.py    # Data aggregation & deduplication
-│   ├── classify_local_tuned.py # ML classification
-│   └── final_result.py      # Final summarization
-├── 📁 app/finalData/        # Canonical processed, classified data
-├── 📁 model/                # ML model checkpoints
-├── 📁 app/                  # Streamlit web application
-│   ├── main.py             # Main application
-│   ├── pages/              # Additional pages
-│   └── output/             # Generated PDFs and KMLs
-└── 📁 saved_itineraries/    # User-created itineraries
+
+## Setup
+
+### Prerequisites
+
+- Python 3.8+
+- Git
+- Optional: Ollama (only needed for LLM summarization modes)
+
+### Install
+
+```bash
+git clone <repository-url>
+cd RouteMaker
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-## 🔄 Data Pipeline
+Optional Ollama model:
 
-The system provides two pipeline modes for different use cases:
+```bash
+ollama pull qwen2.5:0.5b
+```
 
-### Pipeline Modes
+## Run the App
 
-#### 1. **Update Pipeline** (Daily Use) 🔄
-Fast, incremental updates using weighted averaging to merge new data with existing processed data.
+```bash
+streamlit run app/main.py
+```
+
+Open:
+- `http://localhost:8501`
+
+## Pipeline Workflows
+
+### 1) Incremental Update (recommended for regular use)
+
+Use when you add one or more files to `NEW_DATA/`.
 
 ```bash
 python update_pipeline.py --new-data NEW_DATA/
 ```
 
-**When to use:**
-- Adding new agent-scraped reviews
-- Incorporating user submissions
-- Regular incremental updates
-- Preserves all existing data with intelligent merging
+Behavior summary:
+- Normalizes incoming file schema
+- Accepts legacy `text` by mapping it to `description`
+- Filters empty or placeholder descriptions
+- Reuses provided category ratings when present
+- Runs ML scoring only for rows that still need it
+- Merges into `app/finalData/` with lineage updates
 
-**Features:**
-- Only classifies new descriptions (fast!)
-- Weighted averaging maintains statistical accuracy
-- Tracks `description_count` for data quality metrics
-- Metadata tracking (`last_updated` timestamp)
+### 2) Full Rebuild (maintenance / major refresh)
 
-#### 2. **Full Rebuild Pipeline** (Maintenance) 🔧
-Complete rebuild from raw scraped data, processing all files from scratch.
+Use when you want to rebuild all countries from raw sources.
 
 ```bash
-python run_pipeline.py
+python run_pipeline.py --force
 ```
 
-**When to use:**
-- After bulk agent scraping completes
-- Database reset/optimization needed
-- Schema or processing logic changes
-- Admin maintenance tasks
+This runs aggregation -> classification -> final summarization, then rewrites country files in `app/finalData/`.
 
-**Note:** Rebuilds the canonical processed dataset in `app/finalData/`. Use carefully.
+## NEW_DATA Contract
 
-### Pipeline Architecture
+### Required Columns
 
-The data processing pipeline consists of three main stages:
+- `country`
+- `place`
+- `description`
 
-### 1. Data Aggregation (`agg_by_country.py`)
-**Input:** Raw CSV files from `ScrapedData/`  
-**Process:**
-- Reads all CSV files from subdirectories
-- Groups data by country using fuzzy string matching
-- Removes duplicate descriptions (85% similarity threshold)
-- Drops low-information placeholder descriptions (e.g. "Not mentioned in this text")
-- Consolidates place information (URLs, types, regions)
+### Recommended Columns
 
-**Output:** Country-specific processed CSV files in `app/finalData/`
+- `region`
+- `place_type`
+- `google_maps_url`
 
-### 2. ML Classification (`classify_local_tuned.py`)
-**Input:** Processed CSV files from `app/finalData/`  
-**Process:**
-- Uses fine-tuned DeBERTa model for text classification
-- Analyzes place descriptions for 10 categories:
-  - Romance (0-10)
-  - Family-friendly (0-10)
-  - Cost (0-10)
-  - Nature (0-10)
-  - Adventure (0-10)
-  - Culture (0-10)
-  - Food (0-10)
-  - Relaxation (0-10)
-  - Service quality (0-10)
-  - Accessibility (0-10)
+### Optional Metadata
 
-**Output:** CSV files with added classification columns
+- `source`
+- `blog_source`
+- `review_date`
+- `is_manual_entry`
+- Category columns: `romance`, `family`, `cost`, `nature`, `adventure`, `culture`, `food`, `relaxation`, `service`, `accessibility`
 
-### 3. Final Summarization (`final_result.py`)
-**Input:** Classified CSV files
-**Process:**
-- Aggregates multiple descriptions per place
-- Averages classification scores
-- Generates summarized descriptions (optional LLM)
-- Applies cost adjustment heuristics
+Template:
+- `NEW_DATA/TEMPLATE.csv`
 
-**Output:** **Overwrites** the processed files with final summarized datasets
+## Validation and Quality Gates
 
-## 🚀 Installation
+Before pushing changes, run:
 
-### Prerequisites
-- Python 3.8+
-- Git
-- Ollama (for text summarization)
-
-### Setup Steps
-
-1. **Clone the repository:**
 ```bash
-git clone <repository-url>
-cd RouteMaker
+make test && make validate-data
 ```
 
-2. **Create virtual environment:**
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
+What these checks cover:
+- Unit tests for normalization, merge behavior, and quality filters
+- Processed file schema validation
+- Blank description detection
+- Placeholder-description detection
 
-3. **Install dependencies:**
-```bash
-pip install -r requirements.txt
-```
+## Common Commands
 
-4. **Install Ollama (optional, for summarization):**
-```bash
-# Install from https://ollama.ai/
-ollama pull qwen2.5:0.5b
-```
-
-5. **Verify model checkpoint exists:**
-```bash
-ls model/checkpoints/tourism_model_checkpoint_2240/
-```
-
-## 📖 Usage
-
-### Common Commands
+All from project root:
 
 ```bash
-# Run lightweight automated checks
+# Run automated tests
 make test
 
-# Validate processed dataset health
+# Validate processed files
 make validate-data
 
 # Incremental update from NEW_DATA/
@@ -207,214 +210,62 @@ make update
 
 # Full rebuild pipeline
 make rebuild
+
+# Streamlit startup smoke run
+make smoke-app
 ```
 
-### Quick Start
+## Troubleshooting
 
-1. **Start the web application:**
+### A country file has no score columns
+
+Cause:
+- File likely came from pre-classified/raw format.
+
+Fix:
+
 ```bash
-streamlit run app/main.py
-```
-
-2. **Open your browser** to `http://localhost:8501`
-
-### Data Management
-
-Both pipeline modes are accessible in the Streamlit app under **⚙️ Admin Panel** in the sidebar for easy management.
-
-#### Using Update Pipeline (Recommended for Regular Updates)
-
-1. **Place new data in NEW_DATA folder:**
-```bash
-# NEW_DATA/
-# ├── new_reviews.csv
-# ├── agent_scraped_2024.csv
-# └── TEMPLATE.csv (format example)
-```
-
-2. **Run the update pipeline:**
-```bash
-python update_pipeline.py --new-data NEW_DATA/
-```
-
-3. **Results:**
-   - New descriptions automatically classified
-   - Existing places merged with weighted averaging
-   - Statistics displayed (unchanged/merged/new counts)
-  - `app/finalData/` updated with new data
-
-#### Using Full Rebuild (Maintenance Only)
-
-1. **Rebuild from raw scraped data:**
-```bash
-python run_pipeline.py
-```
-
-2. **Options:**
-```bash
-# Force re-processing of all files
 python run_pipeline.py --force
-
-# Skip ML classification (if model unavailable)
-python run_pipeline.py --skip-classification
 ```
 
-### Individual Pipeline Steps
+### validate-data fails
+
+Run:
 
 ```bash
-# Step 1: Aggregate data
-python DataProcess/agg_by_country.py --input ScrapedData --output app/finalData
-
-# Step 2: Classify places
-python DataProcess/classify_local_tuned.py --model model/checkpoints/tourism_model_checkpoint_2240 --data app/finalData
-
-# Step 3: Final processing with AI Summarization (Optional)
-# This will use Ollama to generate a professional 2-3 sentence summary
-python DataProcess/final_result.py --input app/finalData --summarize --model qwen2.5:0.5b --overwrite
+make validate-data
 ```
 
-### Validation Checks
+Then fix reported issues in the listed file(s), especially required columns and empty descriptions.
+
+### App starts but shows old or unexpected data
+
+Check that current files exist under:
+- `app/finalData/`
+
+Then run either:
 
 ```bash
-# Run lightweight automated checks
-python -m unittest discover tests
-
-# Validate processed CSV health (schema + placeholder scan)
-python scripts/validate_pipeline.py --data-dir app/finalData
+make update
 ```
 
-### Web Application Features
+or
 
-- **Multi-route management:** Create and manage multiple trip itineraries
-- **Advanced filtering:** Filter by country, region, place type, and ratings
-- **Interactive editing:** Drag-and-drop day assignment, inline editing
-- **Export options:** Generate PDF guides and KML maps
-- **Emergency stations:** Built-in emergency contact database
-
-## 📁 Project Structure
-
-```
-RouteMaker/
-├── 📄 readme.md                    # This file
-├── 📄 requirements.txt             # Python dependencies
-├── 📄 run_pipeline.py              # Full rebuild pipeline
-├── 📄 update_pipeline.py           # Incremental update pipeline
-│
-├── 📁 ScrapedData/                 # Raw scraped data
-│   ├── Bucketlistly/
-│   ├── The_Blonde_Abroad/
-│   └── The_World_Travel_Guy/
-│
-├── 📁 NEW_DATA/                    # New reviews/scraped data for updates
-│   ├── TEMPLATE.csv               # Format example
-│   └── README.md                  # Update workflow documentation
-│
-├── 📁 DataProcess/                 # Data processing scripts
-│   ├── agg_by_country.py          # Data aggregation
-│   ├── classify_local_tuned.py    # ML classification
-│   └── final_result.py            # Final summarization
-│
-├── 📁 app/finalData/               # Canonical processed datasets
-│   ├── Albania_processed.csv
-│   ├── Vietnam_processed.csv
-│   └── ...
-│
-├── 📁 model/                       # ML models and checkpoints
-│   ├── checkpoints/
-│   │   └── tourism_model_checkpoint_2240/
-│   └── demonstrationModel.py
-│
-├── 📁 app/                         # Streamlit web application
-│   ├── main.py                    # Main application
-│   ├── pages/                     # Additional pages
-│   │   ├── add_review.py
-│   │   ├── agent_management.py
-│   │   └── ...
-│   ├── output/                    # Generated files
-│   └── pdf_maker.py               # PDF generation
-│
-├── 📁 saved_itineraries/           # User itineraries
-├── 📁 scrappers/                   # Scraping scripts
-└── 📁 blogs.json                   # Blog configuration
+```bash
+make rebuild
 ```
 
-## 📊 Data Sources
+### Full rebuild prints a CSV read warning from one raw scraped file
 
-The system currently processes data from:
+Cause:
+- A malformed or empty raw CSV in `ScrapedData/`.
 
-- **Bucketlistly** - Comprehensive travel guides
-- **The Blonde Abroad** - Southeast Asia focus
-- **The World Travel Guy** - Global travel insights
+Fix:
+- Remove or repair that specific raw file, then rerun the rebuild.
 
-Each source provides:
-- Place names and descriptions
-- Location data (country, region)
-- Google Maps links
-- Place categories and types
+## Author
 
-## 🧠 ML Model
+Noamiman
 
-The core of RouteMaker is a custom-trained scorer that transforms qualitative descriptions into quantitative metrics.
-
-### 🚀 Hosted on Hugging Face
-The model is publicly available on the Hugging Face Hub:
-**[👉 roberta-finetuned-blog-analysis-10-labels](https://huggingface.co/noamiman/roberta-finetuned-blog-analysis-10-labels)**
-
-### Model Architecture & Training
-- **Base Model:** Microsoft DeBERTa v3 Small (optimized for RoBERTa-like performance in a small footprint).
-- **Task:** **Multi-output Regression** (10-dimensional experiential scoring).
-- **Knowledge Distillation:** The model was trained using a teacher-student approach. We used **Llama 3 (8B)** to generate synthetic labels for thousands of travel blog snippets, which this model then learned to predict with high efficiency.
-- **Input:** Place descriptions (max 128 tokens).
-- **Output:** Continuous ratings (0-10) for 10 categories.
-
-### 📊 Scoring Dimensions
-The model evaluates every location across 10 categories:
-*Romance, Family, Cost, Nature, Adventure, Culture, Food, Relaxation, Service, and Accessibility.*
-
-### Performance
-- **Distilled Intelligence:** Achieves complex reasoning (distilled from Llama 3) while remaining lightweight enough to run on standard consumer hardware (MacBook Air).
-- **Custom Domain:** Fine-tuned specifically on travel-specific semantics and blog-style writing.
-
-## 🤝 Contributing
-
-### Development Setup
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Make your changes
-4. Run checks: `make test && make validate-data`
-5. Commit changes: `git commit -am 'Add new feature'`
-6. Push to branch: `git push origin feature/new-feature`
-7. Submit a pull request
-
-### Code Style
-- Follow PEP 8 Python style guidelines
-- Add docstrings to functions and classes
-- Include type hints where possible
-- Write descriptive commit messages
-
-### Adding New Data Sources
-1. Create scraper in `scrappers/` directory
-2. Update `blogs.json` configuration
-3. Test data extraction
-4. Run full pipeline to verify integration
-
-### Improving ML Model
-1. Prepare additional training data
-2. Update `model/finetune_tourism.py`
-3. Train and validate new checkpoints
-4. Update pipeline to use new model version
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Travel bloggers for providing rich content
-- Hugging Face for transformer models
-- Streamlit for the web framework
-- Open source community for data processing tools
-
----
-
-**Happy travels! 🌍✈️**
+LinkedIn:
+- https://www.linkedin.com/in/noamiman/
