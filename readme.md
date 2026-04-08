@@ -90,6 +90,8 @@ The full rebuild pipeline runs in three steps:
 - Produces 10 category scores per description
 - Adds rating columns to processed rows
 
+  **Model:** [roberta-finetuned-blog-analysis-10-labels](https://huggingface.co/noamiman/roberta-finetuned-blog-analysis-10-labels) on Hugging Face
+
 3. Final summarization: `DataProcess/final_result.py`
 - Aggregates per-place descriptions
 - Computes per-place score outputs
