@@ -9,6 +9,8 @@ The project combines data engineering, ML inference, and a user-facing planning 
 - Streamlit itinerary planning interface
 - PDF and KML export for trip sharing and navigation
 
+**Live app:** [routemaker.streamlit.app](https://routemaker.streamlit.app/)
+
 ## Summary
 
 RouteMaker helps travelers plan personalized routes instead of relying on generic ratings.
@@ -142,6 +144,10 @@ ollama pull qwen2.5:0.5b
 ```
 
 ## Run the App
+
+Live app: [routemaker.streamlit.app](https://routemaker.streamlit.app/)
+
+To run locally:
 
 ```bash
 streamlit run app/main.py
