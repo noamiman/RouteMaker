@@ -48,8 +48,6 @@ def save_blogs(data):
 
 
 # --- UI ---
-st.set_page_config(page_title="Agent Management", page_icon="🤖", layout="wide")
-
 st.markdown("""
     <style>
     .stButton>button[kind="primary"] { background-color: #ff4b4b; border-color: #ff4b4b; }

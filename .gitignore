@@ -81,3 +81,5 @@ saved_itineraries/
 ._*
 Thumbs.db
 upload.py
+# Streamlit local secrets
+.streamlit/secrets.toml

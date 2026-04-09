@@ -44,13 +44,6 @@ def save_review(review_data):
     df_final.to_csv(reviews_file, index=False, encoding='utf-8-sig')
 
 
-st.set_page_config(
-    page_title="Add Review",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 places_df = load_existing_data()
 
 # Build the base list of known places.
