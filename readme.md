@@ -137,6 +137,20 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Download the Fine-Tuned Model (Hugging Face)
+
+RouteMaker expects the classifier checkpoint at:
+- `model/checkpoints/tourism_model_checkpoint_2240/`
+
+Download it directly from Hugging Face:
+
+```bash
+pip install huggingface_hub
+python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='noamiman/roberta-finetuned-blog-analysis-10-labels', local_dir='model/checkpoints/tourism_model_checkpoint_2240', local_dir_use_symlinks=False)"
+```
+
+After this, `run_pipeline.py` and `update_pipeline.py` will use the model automatically via the default project path configuration.
+
 Optional Ollama model:
 
 ```bash
